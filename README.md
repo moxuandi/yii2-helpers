@@ -69,6 +69,7 @@ $config = [
 	'thumbWidth' => 300,  // 缩略图的宽度
 	'thumbHeight' => 200,  // 缩略图的高度
 	'thumbMode' => 'outbound',  // 生成缩略图的模式, 可用值: 'inset'(补白), 'outbound'(裁剪)
+	'rootPath' => dirname(Yii::$app->request->scriptFile),  // 入口文件目录
 ];
 $up = new Uploader('upfile', $config);
 echo Json::encode([

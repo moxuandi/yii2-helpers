@@ -2,6 +2,7 @@
 namespace moxuandi\helpers;
 
 use Yii;
+use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 use yii\imagine\Image;
 use yii\web\UploadedFile;
@@ -22,10 +23,6 @@ class Uploader
      * @var string 根目录绝对路径
      */
     public $rootPath;
-    /**
-     * @var string 根目录绝对Url
-     */
-    public $rootUrl;
     /**
      * @var string 原始文件名
      */
@@ -131,10 +128,9 @@ class Uploader
             'thumbMode' => 'outbound'
         ];
 
-        $this->file = UploadedFile::getInstanceByName($fileField);  // 获取上传对象
+        $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->config = array_merge($_config, $config);  // 不使用 ArrayHelper::merge() 方法, 是因为其会递归合并数组.
-        $this->rootPath = dirname(Yii::getAlias('@app')) . DIRECTORY_SEPARATOR . 'web';
-        $this->rootUrl = Yii::$app->request->hostInfo;
+        $this->file = UploadedFile::getInstanceByName($fileField);  // 获取上传对象
 
         switch($type){
             case 'remote': $return = self::uploadFile(); break;
