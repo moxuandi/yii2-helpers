@@ -5,6 +5,11 @@ use yii\helpers\ArrayHelper;
 
 /**
  * Class Helper 通用助手类
+ *
+ * @author  zhangmoxuan <1104984259@qq.com>
+ * @link  http://www.zhangmoxuan.com
+ * @QQ  1104984259
+ * @Date  2019-2-4
  */
 class Helper
 {
