@@ -101,7 +101,8 @@ class Uploader
             'thumbStatus' => false,
             'thumbWidth' => 300,
             'thumbHeight' => 200,
-            'thumbMode' => 'outbound'
+            'thumbMode' => 'outbound',
+            'realName' => 'scrawl.png',
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->rootUrl = ArrayHelper::remove($config, 'rootUrl', Yii::$app->request->hostInfo);
@@ -244,7 +245,6 @@ class Uploader
         $this->fileSize = $post['size'];
         $this->fileType = $post['type'];
         $this->fileExt = $this->file->extension;
-        //$this->fileExt = Helper::getExtension($this->realName);
 
         // 检查文件大小是否超出网站限制
         if($this->fileSize > $this->config['maxSize']){
@@ -267,7 +267,7 @@ class Uploader
         $this->file->saveAs($chunkPath . DIRECTORY_SEPARATOR . 'chunk_' . $post['chunk']);
 
         // 分片全部上传完成, 并且分片暂存区保存有所有分片
-        if($post['chunk'] + 1 == $post['chunks'] && count(FileHelper::findFiles($chunkPath, ['recursive'=>false])) == $post['chunks']){
+        if($post['chunk'] + 1 == $post['chunks'] && count(FileHelper::findFiles($chunkPath, ['recursive' => false])) == $post['chunks']){
             $this->fullName = Helper::getFullName($this->realName, $this->config['pathFormat'], $this->fileExt);
             $this->fileName = StringHelper::basename($this->fullName);
 
@@ -316,7 +316,7 @@ class Uploader
 
         $this->realName = $this->config['realName'];
         $this->fileSize = strlen($baseImg);
-        $this->fileType = 'image/png';  // png
+        $this->fileType = 'image/png';
         $this->fileExt = Helper::getExtension($this->realName);
         $this->fullName = Helper::getFullName($this->realName, $this->config['pathFormat'], $this->fileExt);
         $this->fileName = StringHelper::basename($this->fullName);
