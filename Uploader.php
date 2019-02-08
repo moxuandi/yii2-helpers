@@ -11,10 +11,10 @@ use yii\web\UploadedFile;
 /**
  * Class Uploader 通用上传类
  *
- * @author  zhangmoxuan <1104984259@qq.com>
- * @link  http://www.zhangmoxuan.com
- * @QQ  1104984259
- * @Date  2019-2-4
+ * @author zhangmoxuan <1104984259@qq.com>
+ * @link http://www.zhangmoxuan.com
+ * @QQ 1104984259
+ * @Date 2019-2-4
  *
  * 说明: 为兼容 UEditor编辑器(http://ueditor.baidu.com), `$config['allowFiles']`中的扩展名全都带有前缀'.', eg: ['.png', '.jpg', '.jpeg'].
  */
