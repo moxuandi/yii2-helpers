@@ -50,8 +50,11 @@ $config = [
     'thumbWidth' => 300,  // 缩略图宽度
     'thumbHeight' => 200,  // 缩略图高度
     'thumbCut' => 1,  // 生成缩略图的方式, 0:留白, 1:裁剪
-    'pathFormat' => 'uploads/image/{yyyy}{mm}/{yy}{mm}{dd}_{hh}{ii}{ss}_{rand:4}',
-      // 上传保存路径, 可以自定义保存路径和文件名格式
+    'pathFormat' => 'uploads/image/{yyyy}{mm}/{yy}{mm}{dd}_{hh}{ii}{ss}_{rand:4}', // 上传保存路径, 可以自定义保存路径和文件名格式
+ 
+    // 如果`uploads`目录与当前应用的入口文件不在同一个目录, 必须做如下配置:
+    'rootPath' => dirname(dirname(Yii::$app->request->scriptFile)),
+    'rootUrl' => 'http://image.advanced.ccc',
 ];
 $up = new Uploader('upfile', $config);
 echo Json::encode([
