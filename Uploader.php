@@ -23,14 +23,15 @@ class Uploader
     /**
      * @var array 上传配置信息
      * 可用的数组的键如下:
-     * - maxSize: int 上传大小限制,  默认为: 1*1024*1024 (1M).
-     * - allowFiles: array 允许上传的文件类型, 默认为: ['.png', '.jpg', '.jpeg'].
-     * - pathFormat: string 文件保存路径, 默认为: '/uploads/image/{time}'.
-     * - thumbStatus: bool 是否生成缩略图, 默认为: false.
-     * - thumbWidth: int 缩略图的宽度, 默认为: 300.
-     * - thumbHeight: int 缩略图的高度, 默认为: 200.
-     * - thumbMode: string 生成缩略图的模式, 可用值: 'inset'(补白), 'outbound'(裁剪, 默认值).
-     * - realName: string 图片的原始名称, 处理 base64 编码的图片时有效.
+     * - `maxSize`: int 上传大小限制,  默认为: 1*1024*1024 (1M).
+     * - `allowFiles`: array 允许上传的文件类型, 默认为: ['.png', '.jpg', '.jpeg'].
+     * - `pathFormat`: string 文件保存路径, 默认为: '/uploads/image/{time}'.
+     * - `thumbStatus`: bool 是否生成缩略图, 默认为: false.
+     * - `thumbWidth`: int 缩略图的宽度, 默认为: 300.
+     * - `thumbHeight`: int 缩略图的高度, 默认为: 200.
+     * - `thumbMode`: string 生成缩略图的模式, 可用值: 'inset'(补白), 'outbound'(裁剪, 默认值).
+     * - `thumbMatch`: array 缩略图路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'thumb']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留缩略图.
+     * - `realName`: string 图片的原始名称, 处理 base64 编码的图片时有效.
      */
     public $config = [];
     /**
@@ -102,6 +103,7 @@ class Uploader
             'thumbWidth' => 300,
             'thumbHeight' => 200,
             'thumbMode' => 'outbound',
+            'thumbMatch' => ['image', 'thumb'],
             'realName' => 'scrawl.png',
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
@@ -184,14 +186,6 @@ class Uploader
         $this->fullName = Helper::getFullName($this->realName, $this->config['pathFormat'], $this->fileExt);
         $this->fileName = StringHelper::basename($this->fullName);
 
-        // 判断是否生成缩略图
-        if($this->config['thumbStatus'] && in_array($this->fileExt, ['jpg', 'jpeg', 'png'])){
-            if(!self::makeThumb($this->file->tempName)){
-                $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
-                return false;
-            }
-        }
-
         // 创建目录
         $fullPath = FileHelper::normalizePath($this->rootPath . $this->fullName);  // 文件在磁盘上的绝对路径
         if(!FileHelper::createDirectory(dirname($fullPath))){
@@ -201,6 +195,13 @@ class Uploader
 
         // 保存上传文件
         if($this->file->saveAs($fullPath)){
+            // 判断是否生成缩略图
+            if($this->config['thumbStatus'] && in_array($this->fileExt, ['jpg', 'jpeg', 'png'])){
+                if(!self::makeThumb($fullPath)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
+                    return false;
+                }
+            }
             return true;
         }else{
             $this->stateInfo = self::$stateMap['ERROR_FILE_MOVE'];
@@ -351,9 +352,11 @@ class Uploader
      */
     private function makeThumb($tempName)
     {
-        // 创建目录
-        $this->thumbName = Helper::getThumb($this->fullName);
+        list($image, $thumb) = $this->config['thumbMatch'];
+        $this->thumbName = Helper::getThumbName($this->fullName, $image, $thumb);
         $thumbPath = FileHelper::normalizePath($this->rootPath . $this->thumbName);  // 文件在磁盘上的绝对路径
+
+        // 创建目录
         if(!FileHelper::createDirectory(dirname($thumbPath))){
             $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
             return false;

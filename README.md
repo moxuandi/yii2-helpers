@@ -45,17 +45,14 @@ echo Helper::getFullName('img.jpg', 'uploads/image/{yyyy}{mm}/{time}');
 -----
 ```php
 $config = [
-    'maxSize' => 5*1024*1024,  // 上传大小限制, 单位B, 默认5MB
+    'maxSize' => 1*1024*1024,  // 上传大小限制, 单位B, 默认1MB
     'allowFiles' => ['.png', '.jpg', '.jpeg', '.gif', '.bmp'],  // 上传图片格式显示
     'thumbStatus' => false,  // 是否生成缩略图
     'thumbWidth' => 300,  // 缩略图宽度
     'thumbHeight' => 200,  // 缩略图高度
-    'thumbCut' => 1,  // 生成缩略图的方式, 0:留白, 1:裁剪
-    'pathFormat' => 'uploads/image/{yyyy}{mm}/{yy}{mm}{dd}_{hh}{ii}{ss}_{rand:4}', // 上传保存路径, 可以自定义保存路径和文件名格式
- 
-    // 如果`uploads`目录与当前应用的入口文件不在同一个目录, 必须做如下配置:
-    'rootPath' => dirname(dirname(Yii::$app->request->scriptFile)),
-    'rootUrl' => 'http://image.advanced.ccc',
+    'thumbMode' => 'outbound',  // 生成缩略图的模式, 可用值: 'inset'(补白), 'outbound'(裁剪, 默认值)
+    'thumbMatch' => ['image', 'thumb'],  // 缩略图路径的替换规则, 必须是两个元素的数组
+    'pathFormat' => 'uploads/image/{yyyy}{mm}/{yy}{mm}{dd}_{hh}{ii}{ss}_{rand:4}',  // 上传保存路径, 可以自定义保存路径和文件名格式
 ];
 $up = new Uploader('upfile', $config);
 echo Json::encode([
@@ -65,6 +62,8 @@ echo Json::encode([
 ```
 
 > 提示: `width`和`height`其中一个可以设置为`null`, 此时将按原图比例自动缩放图片. 但不能同时为`null`!
+
+> 提示: 对于`thumbMatch`参数, 当两个元素的值相同时, 将不会保存原图, 而仅保留缩略图.
 
 开发计划:
 -----

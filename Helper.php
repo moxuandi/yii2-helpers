@@ -143,7 +143,7 @@ class Helper
      * @param string $thumbStr eg: 'thumb'.
      * @return mixed eg: 'uploads/thumb/201707/1512001416.jpg'.
      */
-    public static function getThumb($url, $imageStr = 'image', $thumbStr = 'thumb')
+    public static function getThumbName($url, $imageStr = 'image', $thumbStr = 'thumb')
     {
         return str_replace($imageStr, $thumbStr, $url);
     }
