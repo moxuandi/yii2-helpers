@@ -42,6 +42,7 @@ echo Helper::getFullName('img.jpg', 'uploads/image/{yyyy}{mm}/{time}');
 ```
 
 调用上传类:
+-----
 ```php
 $config = [
     'maxSize' => 5*1024*1024,  // 上传大小限制, 单位B, 默认5MB
@@ -63,8 +64,10 @@ echo Json::encode([
 ]);
 ```
 
+> 提示: `width`和`height`其中一个可以设置为`null`, 此时将按原图比例自动缩放图片. 但不能同时为`null`!
 
 开发计划:
+-----
 1. 文件/图片上传 --- 完成
 2. 生成缩略图 --- 完成
 3. 分片上传 --- 完成
