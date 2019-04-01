@@ -17,6 +17,15 @@ use yii\web\UploadedFile;
  * @Date 2019-2-4
  *
  * 说明: 为兼容 UEditor编辑器(http://ueditor.baidu.com), `$config['allowFiles']`中的扩展名全都带有前缀'.', eg: ['.png', '.jpg', '.jpeg'].
+ *
+ * \yii\imagine\Image 的可用方法:
+ * `Image::thumbnail()`: 生成缩略图
+ * `Image::crop()`: 裁剪图片
+ * `Image::autorotate()`:
+ * `Image::frame()`: 给图片添加边框
+ * `Image::resize()`: 调整图像大小
+ * `Image::watermark()`: 添加图片水印
+ * `Image::text()`: 添加文字水印
  */
 class Uploader
 {
@@ -190,11 +199,12 @@ class Uploader
 
         // 保存上传文件
         if($this->file->saveAs($fullPath)){
-            // 判断是否生成缩略图
-            if($this->config['thumb'] && in_array($this->fileExt, ['jpg', 'jpeg', 'png'])){
-                if(!self::makeThumb($fullPath)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
-                    return false;
+            if(in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
+                if($this->config['thumb']){  // 生成缩略图
+                    if(!self::makeThumb($fullPath)){
+                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
+                        return false;
+                    }
                 }
             }
             return true;
@@ -282,11 +292,12 @@ class Uploader
             file_put_contents($fullPath, $blob);  // 保存分片内容到文件
             FileHelper::removeDirectory($chunkPath);  // 删除对应分片暂存区
 
-            // 判断是否生成缩略图
-            if($this->config['thumb'] && in_array($this->fileExt, ['jpg', 'jpeg', 'png'])){
-                if(!self::makeThumb($fullPath)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
-                    return false;
+            if(in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
+                if($this->config['thumb']){  // 生成缩略图
+                    if(!self::makeThumb($fullPath)){
+                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
+                        return false;
+                    }
                 }
             }
 
