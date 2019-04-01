@@ -41,6 +41,12 @@ class Uploader
      *   * `height`: int 缩略图的高度.
      *   * `mode`: string 生成缩略图的模式, 可用值: 'inset'(补白), 'outbound'(裁剪, 默认值).
      *   * `match`: array 缩略图路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'thumb']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留缩略图.
+     * - `crop`: false|array 裁剪图像配置. 设置为`false`时不生成裁剪图; 设置为数组时, 有以下可用值:
+     *   * `width`: int 裁剪图的宽度.
+     *   * `height`: int 裁剪图的高度.
+     *   * `top`: int 裁剪图顶部的偏移, y轴起点.
+     *   * `left`: int 裁剪图左侧的偏移, x轴起点.
+     *   * `match`: array 裁剪图路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'crop']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留裁剪图.
      */
     public $config = [];
     /**
@@ -63,6 +69,10 @@ class Uploader
      * @var string 完整的缩略图文件名(带路径)
      */
     public $thumbName;
+    /**
+     * @var string 完整的裁剪图文件名(带路径)
+     */
+    public $cropName;
     /**
      * @var int 文件大小, 单位:B
      */
@@ -206,6 +216,12 @@ class Uploader
                         return false;
                     }
                 }
+                if($this->config['crop']){  // 生成裁剪图
+                    if(!self::cropImage($fullPath)){
+                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
+                        return false;
+                    }
+                }
             }
             return true;
         }else{
@@ -299,6 +315,12 @@ class Uploader
                         return false;
                     }
                 }
+                if($this->config['crop']){  // 生成裁剪图
+                    if(!self::cropImage($fullPath)){
+                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
+                        return false;
+                    }
+                }
             }
 
             //$this->file->size = $this->fileSize;  // 重置上传对象的大小, 可选
@@ -379,6 +401,34 @@ class Uploader
 
         // 生成并保存缩略图
         Image::thumbnail($tempName, $width, $height, $mode)->save($thumbPath);
+        return true;
+    }
+
+    /**
+     * 生成裁剪图
+     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @return bool 裁剪图生成失败时, Image 会抛出异常.
+     * @throws \yii\base\Exception
+     */
+    private function cropImage($tempName)
+    {
+        $width = ArrayHelper::getValue($this->config['crop'], 'width');
+        $height = ArrayHelper::getValue($this->config['crop'], 'height');
+        $top = ArrayHelper::getValue($this->config['crop'], 'top');
+        $left = ArrayHelper::getValue($this->config['crop'], 'left');
+        list($imageStr, $cropStr) = ArrayHelper::getValue($this->config['crop'], 'match', ['image', 'crop']);
+
+        $this->cropName = Helper::getThumbName($this->fullName, $imageStr, $cropStr);
+        $cropPath = FileHelper::normalizePath($this->rootPath . $this->cropName);  // 文件在磁盘上的绝对路径
+
+        // 创建目录
+        if(!FileHelper::createDirectory(dirname($cropPath))){
+            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            return false;
+        }
+
+        // 生成并保存裁剪图
+        Image::crop($tempName, $width, $height, [$left, $top])->save($cropPath);
         return true;
     }
 
