@@ -361,14 +361,14 @@ class Uploader
         $width = ArrayHelper::getValue($this->config['thumb'], 'width');
         $height = ArrayHelper::getValue($this->config['thumb'], 'height');
         $mode = ArrayHelper::getValue($this->config['thumb'], 'mode', 'outbound');
-        list($image, $thumb) = ArrayHelper::getValue($this->config['thumb'], 'match', ['image', 'thumb']);
+        list($imageStr, $thumbStr) = ArrayHelper::getValue($this->config['thumb'], 'match', ['image', 'thumb']);
 
         if(!$width && !$height){
             $this->stateInfo = self::$stateMap['ERROR_THUMB_WIDTH_HEIGHT'];
             return false;
         }
 
-        $this->thumbName = Helper::getThumbName($this->fullName, $image, $thumb);
+        $this->thumbName = Helper::getThumbName($this->fullName, $imageStr, $thumbStr);
         $thumbPath = FileHelper::normalizePath($this->rootPath . $this->thumbName);  // 文件在磁盘上的绝对路径
 
         // 创建目录
