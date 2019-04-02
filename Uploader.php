@@ -119,6 +119,7 @@ class Uploader
             'pathFormat' => '/uploads/image/{time}',
             'realName' => 'scrawl.png',
             'thumb' => false,
+            'crop' => false,
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->rootUrl = ArrayHelper::remove($config, 'rootUrl', Yii::$app->request->hostInfo);
