@@ -23,9 +23,9 @@ use yii\web\UploadedFile;
  * `Image::crop()`: 裁剪图片
  * `Image::frame()`: 给图片添加边框
  * `Image::watermark()`: 添加图片水印
+ * `Image::text()`: 添加文字水印
  * `Image::autorotate()`:
  * `Image::resize()`: 调整图像大小
- * `Image::text()`: 添加文字水印
  */
 class Uploader
 {
@@ -57,6 +57,16 @@ class Uploader
      *   * `top`: int 水印图片的顶部距离原图顶部的偏移, y轴起点, 默认为`0`.
      *   * `left`: int 水印图片的左侧距离原图左侧的偏移, x轴起点, 默认为`0`.
      *   * `match`: array 添加图片水印后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'watermark']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保添加图片水印后的图片.
+     * - `text`: false|array 添加文字水印的配置. 设置为`false`时不添加文字水印; 设置为数组时, 有以下可用值:
+     *   * `text`: string 水印文字的内容.
+     *   * `fontFile`: string 字体文件, 可以是绝对路径或别名.
+     *   * `top`: int 水印文字的顶部距离原图顶部的偏移, y轴起点, 默认为`0`.
+     *   * `left`: int 水印文字的左侧距离原图左侧的偏移, x轴起点, 默认为`0`.
+     *   * `fontOptions`: array 字体属性, 支持以下三个值:
+     *     * `size`: int 字体的大小, 单位像素(`px`), 默认为`12`.
+     *     * `color`: string 字体的颜色, 十六进制颜色编码, 可以不带`#`, 默认为`fff`.
+     *     * `angle`: int 写入文本的角度, 默认为`0`.
+     *   * `match`: array 添加文字水印后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'text']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保添加文字水印后的图片.
      */
     public $config = [];
     /**
@@ -91,6 +101,10 @@ class Uploader
      * @var string 添加水印图片后的完整的文件名(带路径)
      */
     public $watermarkName;
+    /**
+     * @var string 添加文字图片后的完整的文件名(带路径)
+     */
+    public $textName;
     /**
      * @var int 文件大小, 单位:B
      */
@@ -140,6 +154,7 @@ class Uploader
             'crop' => false,  // 裁剪图
             'frame' => false,  // 添加边框
             'watermark' => false,  // 添加图片水印
+            'text' => false,  // 添加文字水印
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->rootUrl = ArrayHelper::remove($config, 'rootUrl', Yii::$app->request->hostInfo);
@@ -404,6 +419,12 @@ class Uploader
                     return false;
                 }
             }
+            if($this->config['text']){  // 添加文字水印
+                if(!self::textImage($tempName)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_TEXT'];
+                    return false;
+                }
+            }
         }
         return true;
     }
@@ -522,6 +543,35 @@ class Uploader
         return true;
     }
 
+    /**
+     * 给图片添加文字水印
+     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @return bool
+     * @throws \yii\base\Exception
+     */
+    private function textImage($tempName)
+    {
+        $text = ArrayHelper::getValue($this->config['text'], 'text');
+        $fontFile = ArrayHelper::getValue($this->config['text'], 'fontFile');
+        $top = ArrayHelper::getValue($this->config['text'], 'top', 0);
+        $left = ArrayHelper::getValue($this->config['text'], 'left', 0);
+        $fontOptions = ArrayHelper::getValue($this->config['text'], 'fontOptions', []);
+        list($imageStr, $textStr) = ArrayHelper::getValue($this->config['text'], 'match', ['image', 'text']);
+
+        $this->textName = Helper::getThumbName($this->fullName, $imageStr, $textStr);
+        $textPath = FileHelper::normalizePath($this->rootPath . $this->textName);  // 文件在磁盘上的绝对路径
+
+        // 创建目录
+        if(!FileHelper::createDirectory(dirname($textPath))){
+            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            return false;
+        }
+
+        // 生成并保存添加文字水印后的图片
+        Image::text($tempName, $text, $fontFile, [$left, $top], $fontOptions)->save($textPath);
+        return true;
+    }
+
 
     /**
      * @var array 上传状态映射表, 国际化用户需考虑此处数据的国际化.
@@ -550,6 +600,7 @@ class Uploader
         'ERROR_MAKE_CROP' => '创建裁剪图失败',
         'ERROR_MAKE_FRAME' => '添加边框失败',
         'ERROR_MAKE_WATERMARK' => '添加图片水印失败',
+        'ERROR_MAKE_TEXT' => '添加文字水印失败',
         'ERROR_CHUNK_DEFECT' => '分片不完整',
         'ERROR_UNKNOWN' => '未知错误',
         //'ERROR_DEAD_LINK' => '链接不可用',
