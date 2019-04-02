@@ -21,8 +21,8 @@ use yii\web\UploadedFile;
  * \yii\imagine\Image 的可用方法:
  * `Image::thumbnail()`: 生成缩略图
  * `Image::crop()`: 裁剪图片
- * `Image::autorotate()`:
  * `Image::frame()`: 给图片添加边框
+ * `Image::autorotate()`:
  * `Image::resize()`: 调整图像大小
  * `Image::watermark()`: 添加图片水印
  * `Image::text()`: 添加文字水印
@@ -47,6 +47,11 @@ class Uploader
      *   * `top`: int 裁剪图顶部的偏移, y轴起点, 默认为`0`.
      *   * `left`: int 裁剪图左侧的偏移, x轴起点, 默认为`0`.
      *   * `match`: array 裁剪图路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'crop']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留裁剪图.
+     * - `frame`: false|array 添加边框的配置. 设置为`false`时不添加边框; 设置为数组时, 有以下可用值:
+     *   * `margin`: int 边框的宽度, 默认为`20`.
+     *   * `color`: string 边框的颜色, 十六进制颜色编码, 可以不带`#`, 默认为`666`.
+     *   * `alpha`: int 边框的透明度, 可能仅`png`图片生效, 默认为`100`.
+     *   * `match`: array 裁剪图路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'frame']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留添加边框后的图片.
      */
     public $config = [];
     /**
@@ -73,6 +78,10 @@ class Uploader
      * @var string 完整的裁剪图文件名(带路径)
      */
     public $cropName;
+    /**
+     * @var string 添加边框后的完整的文件名(带路径)
+     */
+    public $frameName;
     /**
      * @var int 文件大小, 单位:B
      */
@@ -120,6 +129,7 @@ class Uploader
             'realName' => 'scrawl.png',
             'thumb' => false,
             'crop' => false,
+            'frame' => false,
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->rootUrl = ArrayHelper::remove($config, 'rootUrl', Yii::$app->request->hostInfo);
@@ -223,6 +233,12 @@ class Uploader
                         return false;
                     }
                 }
+                if($this->config['frame']){  // 添加边框
+                    if(!self::frameImage($fullPath)){
+                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_FRAME'];
+                        return false;
+                    }
+                }
             }
             return true;
         }else{
@@ -319,6 +335,12 @@ class Uploader
                 if($this->config['crop']){  // 生成裁剪图
                     if(!self::cropImage($fullPath)){
                         $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_CROP'];
+                        return false;
+                    }
+                }
+                if($this->config['frame']){  // 添加边框
+                    if(!self::frameImage($fullPath)){
+                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_FRAME'];
                         return false;
                     }
                 }
@@ -433,6 +455,33 @@ class Uploader
         return true;
     }
 
+    /**
+     * 给图片添加边框
+     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @return bool
+     * @throws \yii\base\Exception
+     */
+    private function frameImage($tempName)
+    {
+        $margin = ArrayHelper::getValue($this->config['frame'], 'margin', 20);
+        $color = ArrayHelper::getValue($this->config['frame'], 'color', '666');
+        $alpha = ArrayHelper::getValue($this->config['frame'], 'alpha', 100);
+        list($imageStr, $frameStr) = ArrayHelper::getValue($this->config['frame'], 'match', ['image', 'frame']);
+
+        $this->frameName = Helper::getThumbName($this->fullName, $imageStr, $frameStr);
+        $framePath = FileHelper::normalizePath($this->rootPath . $this->frameName);  // 文件在磁盘上的绝对路径
+
+        // 创建目录
+        if(!FileHelper::createDirectory(dirname($framePath))){
+            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            return false;
+        }
+
+        // 生成并保存裁剪图
+        Image::frame($tempName, $margin, $color, $alpha)->save($framePath);
+        return true;
+    }
+
 
     /**
      * @var array 上传状态映射表, 国际化用户需考虑此处数据的国际化.
@@ -459,6 +508,7 @@ class Uploader
         'ERROR_HTTP_UPLOAD' => '非法上传',
         'ERROR_MAKE_THUMB' => '创建缩略图失败',
         'ERROR_MAKE_CROP' => '创建裁剪图失败',
+        'ERROR_MAKE_FRAME' => '添加边框失败',
         'ERROR_CHUNK_DEFECT' => '分片不完整',
         'ERROR_UNKNOWN' => '未知错误',
         //'ERROR_DEAD_LINK' => '链接不可用',
