@@ -44,8 +44,8 @@ class Uploader
      * - `crop`: false|array 裁剪图像配置. 设置为`false`时不生成裁剪图; 设置为数组时, 有以下可用值:
      *   * `width`: int 裁剪图的宽度.
      *   * `height`: int 裁剪图的高度.
-     *   * `top`: int 裁剪图顶部的偏移, y轴起点.
-     *   * `left`: int 裁剪图左侧的偏移, x轴起点.
+     *   * `top`: int 裁剪图顶部的偏移, y轴起点, 默认为`0`.
+     *   * `left`: int 裁剪图左侧的偏移, x轴起点, 默认为`0`.
      *   * `match`: array 裁剪图路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'crop']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留裁剪图.
      */
     public $config = [];
@@ -414,8 +414,8 @@ class Uploader
     {
         $width = ArrayHelper::getValue($this->config['crop'], 'width');
         $height = ArrayHelper::getValue($this->config['crop'], 'height');
-        $top = ArrayHelper::getValue($this->config['crop'], 'top');
-        $left = ArrayHelper::getValue($this->config['crop'], 'left');
+        $top = ArrayHelper::getValue($this->config['crop'], 'top', 0);
+        $left = ArrayHelper::getValue($this->config['crop'], 'left', 0);
         list($imageStr, $cropStr) = ArrayHelper::getValue($this->config['crop'], 'match', ['image', 'crop']);
 
         $this->cropName = Helper::getThumbName($this->fullName, $imageStr, $cropStr);
