@@ -220,25 +220,8 @@ class Uploader
 
         // 保存上传文件
         if($this->file->saveAs($fullPath)){
-            if(in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
-                if($this->config['thumb']){  // 生成缩略图
-                    if(!self::makeThumb($fullPath)){
-                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
-                        return false;
-                    }
-                }
-                if($this->config['crop']){  // 生成裁剪图
-                    if(!self::cropImage($fullPath)){
-                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_CROP'];
-                        return false;
-                    }
-                }
-                if($this->config['frame']){  // 添加边框
-                    if(!self::frameImage($fullPath)){
-                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_FRAME'];
-                        return false;
-                    }
-                }
+            if(!self::processImage($fullPath)){
+                return false;
             }
             return true;
         }else{
@@ -325,25 +308,8 @@ class Uploader
             file_put_contents($fullPath, $blob);  // 保存分片内容到文件
             FileHelper::removeDirectory($chunkPath);  // 删除对应分片暂存区
 
-            if(in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
-                if($this->config['thumb']){  // 生成缩略图
-                    if(!self::makeThumb($fullPath)){
-                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
-                        return false;
-                    }
-                }
-                if($this->config['crop']){  // 生成裁剪图
-                    if(!self::cropImage($fullPath)){
-                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_CROP'];
-                        return false;
-                    }
-                }
-                if($this->config['frame']){  // 添加边框
-                    if(!self::frameImage($fullPath)){
-                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_FRAME'];
-                        return false;
-                    }
-                }
+            if(!self::processImage($fullPath)){
+                return false;
             }
 
             //$this->file->size = $this->fileSize;  // 重置上传对象的大小, 可选
@@ -424,6 +390,37 @@ class Uploader
 
         // 生成并保存缩略图
         Image::thumbnail($tempName, $width, $height, $mode)->save($thumbPath);
+        return true;
+    }
+
+    /**
+     * 对图片进一步处理
+     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @return bool
+     * @throws \yii\base\Exception
+     */
+    private function processImage($tempName)
+    {
+        if(in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
+            if($this->config['thumb']){  // 生成缩略图
+                if(!self::makeThumb($tempName)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
+                    return false;
+                }
+            }
+            if($this->config['crop']){  // 生成裁剪图
+                if(!self::cropImage($tempName)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_CROP'];
+                    return false;
+                }
+            }
+            if($this->config['frame']){  // 添加边框
+                if(!self::frameImage($tempName)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_FRAME'];
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
