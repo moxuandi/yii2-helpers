@@ -24,8 +24,8 @@ use yii\web\UploadedFile;
  * `Image::frame()`: 给图片添加边框
  * `Image::watermark()`: 添加图片水印
  * `Image::text()`: 添加文字水印
- * `Image::autorotate()`:
  * `Image::resize()`: 调整图像大小
+ * `Image::autorotate()`:
  */
 class Uploader
 {
@@ -67,6 +67,13 @@ class Uploader
      *     * `color`: string 字体的颜色, 十六进制颜色编码, 可以不带`#`, 默认为`fff`.
      *     * `angle`: int 写入文本的角度, 默认为`0`.
      *   * `match`: array 添加文字水印后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'text']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保添加文字水印后的图片.
+     * - `resize`: false|array 调整图片大小的配置. 设置为`false`时不调整大小; 设置为数组时, 有以下可用值:
+     *   * `width`: int 图片调整后的宽度.
+     *   * `height`: int 图片调整后的高度.
+     *   * `keepAspectRatio`: bool 是否保持图片纵横比, 默认为`true`.
+     *     * 如果设置为`true`, 图片将在不超过`width`和`height`的情况下, 等比例缩放;
+     *   * `allowUpscaling`: bool 如果原图很小, 图片是否放大, 默认为`false`.
+     *   * `match`: array 调整图片大小后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'resize']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留调整大小的图片.
      */
     public $config = [];
     /**
@@ -105,6 +112,10 @@ class Uploader
      * @var string 添加文字图片后的完整的文件名(带路径)
      */
     public $textName;
+    /**
+     * @var string 调整图片大小后的完整的文件名(带路径)
+     */
+    public $resizeName;
     /**
      * @var int 文件大小, 单位:B
      */
@@ -155,6 +166,7 @@ class Uploader
             'frame' => false,  // 添加边框
             'watermark' => false,  // 添加图片水印
             'text' => false,  // 添加文字水印
+            'resize' => false,  // 调整图片大小
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->rootUrl = ArrayHelper::remove($config, 'rootUrl', Yii::$app->request->hostInfo);
@@ -425,6 +437,12 @@ class Uploader
                     return false;
                 }
             }
+            if($this->config['resize']){  // 调整图片大小
+                if(!self::resizeImage($tempName)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_RESIZE'];
+                    return false;
+                }
+            }
         }
         return true;
     }
@@ -572,6 +590,34 @@ class Uploader
         return true;
     }
 
+    /**
+     * 调整图片大小
+     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @return bool
+     * @throws \yii\base\Exception
+     */
+    private function resizeImage($tempName)
+    {
+        $width = ArrayHelper::getValue($this->config['resize'], 'width');
+        $height = ArrayHelper::getValue($this->config['resize'], '$height');
+        $keepAspectRatio = ArrayHelper::getValue($this->config['resize'], 'keepAspectRatio', true);
+        $allowUpscaling = ArrayHelper::getValue($this->config['resize'], 'allowUpscaling', false);
+        list($imageStr, $resizeStr) = ArrayHelper::getValue($this->config['resize'], 'match', ['image', 'resize']);
+
+        $this->resizeName = Helper::getThumbName($this->fullName, $imageStr, $resizeStr);
+        $resizePath = FileHelper::normalizePath($this->rootPath . $this->resizeName);  // 文件在磁盘上的绝对路径
+
+        // 创建目录
+        if(!FileHelper::createDirectory(dirname($resizePath))){
+            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            return false;
+        }
+
+        // 生成并保存调整图片大小后的图片
+        Image::resize($tempName, $width, $height, $keepAspectRatio, $allowUpscaling)->save($resizePath);
+        return true;
+    }
+
 
     /**
      * @var array 上传状态映射表, 国际化用户需考虑此处数据的国际化.
@@ -601,6 +647,7 @@ class Uploader
         'ERROR_MAKE_FRAME' => '添加边框失败',
         'ERROR_MAKE_WATERMARK' => '添加图片水印失败',
         'ERROR_MAKE_TEXT' => '添加文字水印失败',
+        'ERROR_MAKE_RESIZE' => '调整图片大小失败',
         'ERROR_CHUNK_DEFECT' => '分片不完整',
         'ERROR_UNKNOWN' => '未知错误',
         //'ERROR_DEAD_LINK' => '链接不可用',

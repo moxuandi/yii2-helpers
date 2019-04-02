@@ -95,6 +95,15 @@ $config = [
         ],
         'match' => ['image', 'text'],  // 添加文字水印后保存路径的替换规则, 必须是两个元素的数组
     ],
+	
+    //'resize' => false,  // 不调整图片大小
+    'resize' => [  // 调整图片大小的配置
+        'width' => 300,  // 图片调整后的宽度
+        'height' => 200,  // 图片调整后的高度
+        'keepAspectRatio' => true,  // 是否保持图片纵横比, 默认为`true`
+        'allowUpscaling' => false,  // 如果原图很小, 图片是否放大, 默认为`false`
+        'match' => ['image', 'resize'],  // 调整图片大小后保存路径的替换规则, 必须是两个元素的数组
+    ],
 ];
 $up = new Uploader('upfile', $config);
 echo Json::encode([
