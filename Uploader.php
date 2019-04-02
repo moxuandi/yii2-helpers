@@ -218,7 +218,7 @@ class Uploader
                 }
                 if($this->config['crop']){  // 生成裁剪图
                     if(!self::cropImage($fullPath)){
-                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
+                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_CROP'];
                         return false;
                     }
                 }
@@ -317,7 +317,7 @@ class Uploader
                 }
                 if($this->config['crop']){  // 生成裁剪图
                     if(!self::cropImage($fullPath)){
-                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
+                        $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_CROP'];
                         return false;
                     }
                 }
@@ -457,6 +457,7 @@ class Uploader
         'ERROR_WRITE_CONTENT' => '写入文件内容错误',
         'ERROR_HTTP_UPLOAD' => '非法上传',
         'ERROR_MAKE_THUMB' => '创建缩略图失败',
+        'ERROR_MAKE_CROP' => '创建裁剪图失败',
         'ERROR_CHUNK_DEFECT' => '分片不完整',
         'ERROR_UNKNOWN' => '未知错误',
         //'ERROR_DEAD_LINK' => '链接不可用',
