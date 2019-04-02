@@ -73,6 +73,14 @@ $config = [
         'alpha' => 100, // 边框的透明度, 可能仅`png`图片生效, 默认为`100`
         'match' => ['image', 'frame'],  // 添加边框后保存路径的替换规则, 必须是两个元素的数组
     ],
+	
+    //'watermark' => false,  // 不添加图片水印
+    'watermark' => [  // 添加图片水印的配置
+        'watermarkImage' => '/uploads/watermark.png',  // 水印图片的绝对路径
+        'top' => 100, // 水印图片的顶部距离原图顶部的偏移, y轴起点, 默认为`0`
+        'left' => 200, // 水印图片的左侧距离原图左侧的偏移, x轴起点, 默认为`0`
+        'match' => ['image', 'watermark'],  // 添加图片水印后保存路径的替换规则, 必须是两个元素的数组
+    ],
 ];
 $up = new Uploader('upfile', $config);
 echo Json::encode([

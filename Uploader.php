@@ -22,9 +22,9 @@ use yii\web\UploadedFile;
  * `Image::thumbnail()`: 生成缩略图
  * `Image::crop()`: 裁剪图片
  * `Image::frame()`: 给图片添加边框
+ * `Image::watermark()`: 添加图片水印
  * `Image::autorotate()`:
  * `Image::resize()`: 调整图像大小
- * `Image::watermark()`: 添加图片水印
  * `Image::text()`: 添加文字水印
  */
 class Uploader
@@ -52,6 +52,11 @@ class Uploader
      *   * `color`: string 边框的颜色, 十六进制颜色编码, 可以不带`#`, 默认为`666`.
      *   * `alpha`: int 边框的透明度, 可能仅`png`图片生效, 默认为`100`.
      *   * `match`: array 添加边框后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'frame']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留添加边框后的图片.
+     * - `watermark`: false|array 添加图片水印的配置. 设置为`false`时不添加图片水印; 设置为数组时, 有以下可用值:
+     *   * `watermarkImage`: string 水印图片的绝对路径.
+     *   * `top`: int 水印图片的顶部距离原图顶部的偏移, y轴起点, 默认为`0`.
+     *   * `left`: int 水印图片的左侧距离原图左侧的偏移, x轴起点, 默认为`0`.
+     *   * `match`: array 添加图片水印后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'watermark']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保添加图片水印后的图片.
      */
     public $config = [];
     /**
@@ -82,6 +87,10 @@ class Uploader
      * @var string 添加边框后的完整的文件名(带路径)
      */
     public $frameName;
+    /**
+     * @var string 添加水印图片后的完整的文件名(带路径)
+     */
+    public $watermarkName;
     /**
      * @var int 文件大小, 单位:B
      */
@@ -127,9 +136,10 @@ class Uploader
             'allowFiles' => ['.png', '.jpg', '.jpeg'],
             'pathFormat' => '/uploads/image/{time}',
             'realName' => 'scrawl.png',
-            'thumb' => false,
-            'crop' => false,
-            'frame' => false,
+            'thumb' => false,  // 缩略图
+            'crop' => false,  // 裁剪图
+            'frame' => false,  // 添加边框
+            'watermark' => false,  // 添加图片水印
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->rootUrl = ArrayHelper::remove($config, 'rootUrl', Yii::$app->request->hostInfo);
@@ -362,6 +372,43 @@ class Uploader
     }
 
     /**
+     * 对图片进一步处理
+     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @return bool
+     * @throws \yii\base\Exception
+     */
+    private function processImage($tempName)
+    {
+        if(in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
+            if($this->config['thumb']){  // 生成缩略图
+                if(!self::makeThumb($tempName)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
+                    return false;
+                }
+            }
+            if($this->config['crop']){  // 生成裁剪图
+                if(!self::cropImage($tempName)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_CROP'];
+                    return false;
+                }
+            }
+            if($this->config['frame']){  // 添加边框
+                if(!self::frameImage($tempName)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_FRAME'];
+                    return false;
+                }
+            }
+            if($this->config['watermark']){  // 添加图片水印
+                if(!self::watermarkImage($tempName)){
+                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_WATERMARK'];
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * 生成缩略图.
      * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
      * @return bool 缩略图生成失败时, Image 会抛出异常.
@@ -390,37 +437,6 @@ class Uploader
 
         // 生成并保存缩略图
         Image::thumbnail($tempName, $width, $height, $mode)->save($thumbPath);
-        return true;
-    }
-
-    /**
-     * 对图片进一步处理
-     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
-     * @return bool
-     * @throws \yii\base\Exception
-     */
-    private function processImage($tempName)
-    {
-        if(in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
-            if($this->config['thumb']){  // 生成缩略图
-                if(!self::makeThumb($tempName)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
-                    return false;
-                }
-            }
-            if($this->config['crop']){  // 生成裁剪图
-                if(!self::cropImage($tempName)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_CROP'];
-                    return false;
-                }
-            }
-            if($this->config['frame']){  // 添加边框
-                if(!self::frameImage($tempName)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_FRAME'];
-                    return false;
-                }
-            }
-        }
         return true;
     }
 
@@ -474,8 +490,35 @@ class Uploader
             return false;
         }
 
-        // 生成并保存裁剪图
+        // 生成并保存添加边框后的图片
         Image::frame($tempName, $margin, $color, $alpha)->save($framePath);
+        return true;
+    }
+
+    /**
+     * 给图片添加图片水印
+     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @return bool
+     * @throws \yii\base\Exception
+     */
+    private function watermarkImage($tempName)
+    {
+        $watermarkImage = ArrayHelper::getValue($this->config['watermark'], 'watermarkImage');
+        $top = ArrayHelper::getValue($this->config['watermark'], 'top', 0);
+        $left = ArrayHelper::getValue($this->config['watermark'], 'left', 0);
+        list($imageStr, $watermarkStr) = ArrayHelper::getValue($this->config['watermark'], 'match', ['image', 'watermark']);
+
+        $this->watermarkName = Helper::getThumbName($this->fullName, $imageStr, $watermarkStr);
+        $watermarkPath = FileHelper::normalizePath($this->rootPath . $this->watermarkName);  // 文件在磁盘上的绝对路径
+
+        // 创建目录
+        if(!FileHelper::createDirectory(dirname($watermarkPath))){
+            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            return false;
+        }
+
+        // 生成并保存添加图片水印后的图片
+        Image::watermark($tempName, $watermarkImage, [$left, $top])->save($watermarkPath);
         return true;
     }
 
@@ -506,6 +549,7 @@ class Uploader
         'ERROR_MAKE_THUMB' => '创建缩略图失败',
         'ERROR_MAKE_CROP' => '创建裁剪图失败',
         'ERROR_MAKE_FRAME' => '添加边框失败',
+        'ERROR_MAKE_WATERMARK' => '添加图片水印失败',
         'ERROR_CHUNK_DEFECT' => '分片不完整',
         'ERROR_UNKNOWN' => '未知错误',
         //'ERROR_DEAD_LINK' => '链接不可用',
