@@ -6,6 +6,7 @@ yii2-helpers: 助手类,通用上传类
 使用 [composer](http://getcomposer.org/download/) 下载:
 ```
 # 2.x(yii >= 2.0.16):
+composer require moxuandi/yii2-helpers:"~2.1"
 composer require moxuandi/yii2-helpers:"~2.0"
 
 # 1.x(非重要Bug, 不再更新):
