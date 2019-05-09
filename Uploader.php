@@ -33,7 +33,7 @@ class Uploader
      * @var array 上传配置信息
      * 可用的数组的键如下:
      * - `maxSize`: int 上传大小限制,  默认为: 1*1024*1024 (1M).
-     * - `allowFiles`: array 允许上传的文件类型, 默认为: ['.png', '.jpg', '.jpeg'].
+     * - `allowFiles`: array 允许上传的文件类型, 默认为: ['.png', '.jpg', '.jpeg']. 设置为空数组或`false`时, 将不验证文件类型!
      * - `pathFormat`: string 文件保存路径, 默认为: '/uploads/image/{time}'.
      * - `realName`: string 图片的原始名称, 处理 base64 编码的图片时有效.
      * - `thumb`: false|array 缩略图配置. 设置为`false`时不生成缩略图; 设置为数组时, 有以下可用值:
@@ -240,7 +240,7 @@ class Uploader
         $this->fileExt = $this->file->extension;
 
         // 检查文件类型(扩展名)是否符合网站要求
-        if(!in_array('.' . $this->fileExt, $this->config['allowFiles'])){
+        if($this->config['allowFiles'] && !in_array('.' . $this->fileExt, $this->config['allowFiles'])){
             $this->stateInfo = self::$stateMap['ERROR_TYPE_NOT_ALLOWED'];
             return false;
         }
@@ -312,7 +312,7 @@ class Uploader
         }
 
         // 检查文件类型(扩展名)是否符合网站要求
-        if(!in_array('.' . $this->fileExt, $this->config['allowFiles'])){
+        if($this->config['allowFiles'] && !in_array('.' . $this->fileExt, $this->config['allowFiles'])){
             $this->stateInfo = self::$stateMap['ERROR_TYPE_NOT_ALLOWED'];
             return false;
         }
