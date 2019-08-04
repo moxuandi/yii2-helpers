@@ -1,10 +1,27 @@
 yii2-helpers: 助手类,通用上传类
 ==================
 
+> 提示: 2.2.x版本不再自动引入依赖的扩展！如果使用以下类, 请引入相关的扩展:
+>
+> > Uploader: [yiisoft/yii2-imagine](https://github.com/yiisoft/yii2-imagine)
+
+
+目录
+------------
+
+1. [Helper助手类用法示例](#Helper助手类用法示例)
+
+2. [Uploader上传类用法示例](#Uploader上传类用法示例)
+
+
+
 安装:
 ------------
 使用 [composer](http://getcomposer.org/download/) 下载:
 ```
+# 2.2.x(yii >= 2.0.24):
+composer require moxuandi/yii2-helpers:"~2.2.0"
+
 # 2.x(yii >= 2.0.16):
 composer require moxuandi/yii2-helpers:"~2.1.0"
 composer require moxuandi/yii2-helpers:"~2.0.0"
@@ -20,7 +37,7 @@ composer require moxuandi/yii2-helpers:"dev-master"
 ```
 
 
-用法示例:
+Helper助手类用法示例:
 -----
 ```php
 // 判断当前服务器操作系统, eg: 'Linux'或'Windows':
@@ -42,7 +59,7 @@ echo Helper::getExtension('uploads/img.jpg');
 echo Helper::getFullName('img.jpg', 'uploads/image/{yyyy}{mm}/{time}');
 ```
 
-调用上传类:
+Uploader上传类用法示例:
 -----
 ```php
 $config = [

@@ -11,8 +11,7 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": "~2.0.16",
-        "yiisoft/yii2-imagine": "~2.1.1"
+        "yiisoft/yii2": "~2.0.24"
     },
     "autoload": {
         "psr-4": {
