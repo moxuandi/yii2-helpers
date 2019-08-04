@@ -4,17 +4,16 @@ yii2-helpers: 助手类,通用上传类
 > 提示: 2.2.x版本不再自动引入依赖的扩展！如果使用以下类, 请引入相关的扩展
 
 
-目录
-------------
+## 目录
 
 1. [Helper助手类用法示例](#Helper助手类用法示例)
 
 2. [Uploader上传类用法示例](#Uploader上传类用法示例): 需引入扩展[yiisoft/yii2-imagine](https://github.com/yiisoft/yii2-imagine)
 
+3. [OAuth2第三方登录用法示例](#OAuth2第三方登录用法示例): 需引入扩展[yiisoft/yii2-authclient](https://github.com/yiisoft/yii2-authclient)
 
 
-安装:
-------------
+## 安装:
 使用 [composer](http://getcomposer.org/download/) 下载:
 ```
 # 2.2.x(yii >= 2.0.24):
@@ -35,8 +34,7 @@ composer require moxuandi/yii2-helpers:"dev-master"
 ```
 
 
-Helper助手类用法示例:
------
+### Helper助手类用法示例:
 ```php
 // 判断当前服务器操作系统, eg: 'Linux'或'Windows':
 echo Helper::getOs();
@@ -57,8 +55,7 @@ echo Helper::getExtension('uploads/img.jpg');
 echo Helper::getFullName('img.jpg', 'uploads/image/{yyyy}{mm}/{time}');
 ```
 
-Uploader上传类用法示例:
------
+### Uploader上传类用法示例:
 ```php
 $config = [
     'maxSize' => 1*1024*1024,  // 上传大小限制, 单位B, 默认1MB
@@ -132,8 +129,7 @@ echo Json::encode([
 
 > 提示: 配置中的`match`参数, 当两个元素的值相同时, 将不会保存原图, 而仅保留缩略图.
 
-开发计划:
------
+#### Uploader上传类-开发计划:
 1. 文件/图片上传 --- 完成
 2. 生成缩略图 --- 完成
 3. 分片上传 --- 完成
@@ -142,3 +138,106 @@ echo Json::encode([
 6. 保存上传信息到数据库
 7. Image 的其它应用(裁剪, 边框, 图片水印, 文字水印, 旋转) --- 完成
 8. 可视化上传图片
+
+
+### OAuth2第三方登录用法示例
+
+> 参考[AuthClient 扩展](https://github.com/yiisoft/yii2-authclient/tree/master/docs/guide-zh-CN):
+
+#### 0. `yii2-authclient`默认提供了以下几个立即可用的客户端:
+- [yii\authclient\clients\Facebook](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/Facebook.php)
+- [yii\authclient\clients\GitHub](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/GitHub.php)
+- [yii\authclient\clients\Google](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/Google.php)
+- [yii\authclient\clients\GoogleHybrid](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/GoogleHybrid.php)
+- [yii\authclient\clients\LinkedIn](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/LinkedIn.php)
+- [yii\authclient\clients\Live](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/Live.php)
+- [yii\authclient\clients\Twitter](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/Twitter.php)
+- [yii\authclient\clients\TwitterOAuth2](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/TwitterOAuth2.php)
+- [yii\authclient\clients\VKontakte](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/VKontakte.php)
+- [yii\authclient\clients\Yandex](https://github.com/yiisoft/yii2-authclient/blob/master/src/clients/Yandex.php)
+
+#### 1. 配置应用程序
+```php
+'components' => [
+    'authClientCollection' => [
+        'class' => 'yii\authclient\Collection',
+        'clients' => [
+            'qq' => [
+                'class' => 'moxuandi\oauth\QQClient',
+                'clientId' => 'your APP ID',
+                'clientSecret' => 'your APP Key',
+            ],
+            'github' => [
+                'class' => 'yii\authclient\clients\GitHub',
+                'clientId' => 'your Client ID',
+                'clientSecret' => 'your Client Secret',
+            ],
+        ]
+    ],
+],
+```
+
+#### 2. 向控制器添加动作
+参考:[向控制器中添加动作](https://github.com/yiisoft/yii2-authclient/blob/master/docs/guide-zh-CN/quick-start.md#%E5%90%91%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B8%AD%E6%B7%BB%E5%8A%A0%E5%8A%A8%E4%BD%9C)
+```php
+class SiteController extends Controller
+{
+    public function actions()
+    {
+        return [
+            'auth' => [
+                'class' => 'yii\authclient\AuthAction',
+                'successCallback' => [$this, 'onAuthSuccess'],
+            ],
+        ];
+    }
+
+    public function onAuthSuccess(BaseClient $client)
+    {
+        $attributes = $client->getUserAttributes();
+    
+        // user login or signup comes here(处理登录)
+    }
+}
+```
+
+#### 3. 向登录视图添加小部件:
+```html
+<?= \yii\authclient\widgets\AuthChoice::widget([
+    'baseAuthUrl' => ['/site/auth'],
+    'popupMode' => false,  // 不使用弹出窗口
+]) ?>
+```
+或
+```html
+<a class="auth-link" href="<?= Url::to(['/site/auth', 'authclient' => 'qq']) ?>">QQ 登录</a>
+<a class="auth-link" href="<?= Url::to(['/site/auth', 'authclient' => 'github']) ?>">Github 登录</a>
+```
+
+#### 4. 保存授权数据的表结构
+```sql
+CREATE TABLE IF NOT EXISTS `auth` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `source` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `source_id` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk-auth-user_id-user-id` (`user_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+```
+```php
+$mg = new Migration();
+$mg->createTable('auth', [
+    'id' => $mg->primaryKey(),
+    'user_id' => $mg->integer()->notNull(),
+    'source' => $mg->string()->notNull(),  // 验证提供商: qq/weibo/wechat
+    'source_id' => $mg->string()->notNull(),  // 唯一ID: openid
+]);
+$mg->addForeignKey('fk-auth-user_id-user-id', 'auth', 'user_id', 'user', 'id', 'CASCADE', 'CASCADE');
+```
+
+#### 5. 申请:
+- QQ第三方登录申请: [QQ互联管理中心](https://connect.qq.com/manage.html#/)
+- 微信第三方登录申请: [微信开发平台](https://open.weixin.qq.com/)
+- 新浪微博第三方登录申请: [新浪微博开发平台](http://open.weibo.com/)
+- Github第三方登录申请: [Developer settings](https://github.com/settings/applications/551810)
