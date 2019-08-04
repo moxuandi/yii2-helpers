@@ -1,9 +1,7 @@
 yii2-helpers: 助手类,通用上传类
 ==================
 
-> 提示: 2.2.x版本不再自动引入依赖的扩展！如果使用以下类, 请引入相关的扩展:
->
-> > Uploader: [yiisoft/yii2-imagine](https://github.com/yiisoft/yii2-imagine)
+> 提示: 2.2.x版本不再自动引入依赖的扩展！如果使用以下类, 请引入相关的扩展
 
 
 目录
@@ -11,7 +9,7 @@ yii2-helpers: 助手类,通用上传类
 
 1. [Helper助手类用法示例](#Helper助手类用法示例)
 
-2. [Uploader上传类用法示例](#Uploader上传类用法示例)
+2. [Uploader上传类用法示例](#Uploader上传类用法示例): 需引入扩展[yiisoft/yii2-imagine](https://github.com/yiisoft/yii2-imagine)
 
 
 
