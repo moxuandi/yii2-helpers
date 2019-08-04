@@ -3,6 +3,11 @@ namespace moxuandi\helpers;
 
 /**
  * Class ArrayHelper 拓展数组助手类
+ *
+ * @author zhangmoxuan <1104984259@qq.com>
+ * @link http://www.zhangmoxuan.com
+ * @QQ 1104984259
+ * @Date 2019-8-4
  */
 class ArrayHelper extends \yii\helpers\ArrayHelper
 {

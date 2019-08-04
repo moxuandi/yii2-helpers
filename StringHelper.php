@@ -3,6 +3,11 @@ namespace moxuandi\helpers;
 
 /**
  * Class StringHelper 拓展字符串助手类
+ *
+ * @author zhangmoxuan <1104984259@qq.com>
+ * @link http://www.zhangmoxuan.com
+ * @QQ 1104984259
+ * @Date 2019-8-4
  */
 class StringHelper extends \yii\helpers\StringHelper
 {
