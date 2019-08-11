@@ -30,11 +30,11 @@ class StringHelper extends \yii\helpers\StringHelper
                 'type' => 'checkbox',
                 'value' => ArrayHelper::getValue($styles, 'text-decoration') === 'underline',
             ],
-            'font-size' => [
+            /*'font-size' => [
                 'label' => '字号',
                 'type' => 'dropDownList',
                 'value' => ArrayHelper::getValue($styles, 'font-size', ''),
-            ],
+            ],*/
             'color' => [
                 'label' => '颜色',
                 'type' => 'colorPicker',  // 调用`KindEditor`的取色器
