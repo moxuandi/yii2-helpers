@@ -2,6 +2,8 @@
 namespace moxuandi\helpers;
 
 use Yii;
+use yii\base\ErrorException;
+use yii\base\Exception;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 use yii\helpers\StringHelper;
@@ -36,44 +38,40 @@ class Uploader
      * - `allowFiles`: array 允许上传的文件类型, 默认为: ['.png', '.jpg', '.jpeg']. 设置为空数组或`false`时, 将不验证文件类型!
      * - `pathFormat`: string 文件保存路径, 默认为: '/uploads/image/{time}'.
      * - `realName`: string 图片的原始名称, 处理 base64 编码的图片时有效.
-     * - `thumb`: false|array 缩略图配置. 设置为`false`时不生成缩略图; 设置为数组时, 有以下可用值:
-     *   * `width`: int 缩略图的宽度.
-     *   * `height`: int 缩略图的高度.
-     *   * `mode`: string 生成缩略图的模式, 可用值: 'inset'(补白), 'outbound'(裁剪, 默认值).
-     *   * `match`: array 缩略图路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'thumb']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留缩略图.
-     * - `crop`: false|array 裁剪图像配置. 设置为`false`时不生成裁剪图; 设置为数组时, 有以下可用值:
-     *   * `width`: int 裁剪图的宽度.
-     *   * `height`: int 裁剪图的高度.
-     *   * `top`: int 裁剪图顶部的偏移, y轴起点, 默认为`0`.
-     *   * `left`: int 裁剪图左侧的偏移, x轴起点, 默认为`0`.
-     *   * `match`: array 裁剪图路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'crop']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留裁剪图.
-     * - `frame`: false|array 添加边框的配置. 设置为`false`时不添加边框; 设置为数组时, 有以下可用值:
-     *   * `margin`: int 边框的宽度, 默认为`20`.
-     *   * `color`: string 边框的颜色, 十六进制颜色编码, 可以不带`#`, 默认为`666`.
-     *   * `alpha`: int 边框的透明度, 可能仅`png`图片生效, 默认为`100`.
-     *   * `match`: array 添加边框后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'frame']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留添加边框后的图片.
-     * - `watermark`: false|array 添加图片水印的配置. 设置为`false`时不添加图片水印; 设置为数组时, 有以下可用值:
-     *   * `watermarkImage`: string 水印图片的绝对路径.
-     *   * `top`: int 水印图片的顶部距离原图顶部的偏移, y轴起点, 默认为`0`.
-     *   * `left`: int 水印图片的左侧距离原图左侧的偏移, x轴起点, 默认为`0`.
-     *   * `match`: array 添加图片水印后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'watermark']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保添加图片水印后的图片.
-     * - `text`: false|array 添加文字水印的配置. 设置为`false`时不添加文字水印; 设置为数组时, 有以下可用值:
-     *   * `text`: string 水印文字的内容.
-     *   * `fontFile`: string 字体文件, 可以是绝对路径或别名.
-     *   * `top`: int 水印文字的顶部距离原图顶部的偏移, y轴起点, 默认为`0`.
-     *   * `left`: int 水印文字的左侧距离原图左侧的偏移, x轴起点, 默认为`0`.
-     *   * `fontOptions`: array 字体属性, 支持以下三个值:
-     *     * `size`: int 字体的大小, 单位像素(`px`), 默认为`12`.
-     *     * `color`: string 字体的颜色, 十六进制颜色编码, 可以不带`#`, 默认为`fff`.
-     *     * `angle`: int 写入文本的角度, 默认为`0`.
-     *   * `match`: array 添加文字水印后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'text']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保添加文字水印后的图片.
-     * - `resize`: false|array 调整图片大小的配置. 设置为`false`时不调整大小; 设置为数组时, 有以下可用值:
-     *   * `width`: int 图片调整后的宽度.
-     *   * `height`: int 图片调整后的高度.
-     *   * `keepAspectRatio`: bool 是否保持图片纵横比, 默认为`true`.
+     * - `process`: false|array 图片处理配置, 二维数组. 设置为`false`时不处理图片; 设置为二维数组时, 有以下可用值:
+     *   - `match`: array 图片处理后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'process']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留处理后的图片.
+     *   - `thumb`: false|array 缩略图配置. 有以下可用值:
+     *     * `width`: int 缩略图的宽度.
+     *     * `height`: int 缩略图的高度.
+     *     * `mode`: string 生成缩略图的模式, 可用值: 'inset'(补白), 'outbound'(裁剪, 默认值).
+     *   - `crop`: false|array 裁剪图像配置. 有以下可用值:
+     *     * `width`: int 裁剪图的宽度.
+     *     * `height`: int 裁剪图的高度.
+     *     * `top`: int 裁剪图顶部的偏移, y轴起点, 默认为`0`.
+     *     * `left`: int 裁剪图左侧的偏移, x轴起点, 默认为`0`.
+     *   - `frame`: false|array 添加边框的配置. 有以下可用值:
+     *     * `margin`: int 边框的宽度, 默认为`20`.
+     *     * `color`: string 边框的颜色, 十六进制颜色编码, 可以不带`#`, 默认为`666`.
+     *     * `alpha`: int 边框的透明度, 可能仅`png`图片生效, 默认为`100`.
+     *   - `watermark`: false|array 添加图片水印的配置. 有以下可用值:
+     *     * `watermarkImage`: string 水印图片的绝对路径.
+     *     * `top`: int 水印图片的顶部距离原图顶部的偏移, y轴起点, 默认为`0`.
+     *     * `left`: int 水印图片的左侧距离原图左侧的偏移, x轴起点, 默认为`0`.
+     *   - `text`: false|array 添加文字水印的配置. 有以下可用值:
+     *     * `text`: string 水印文字的内容.
+     *     * `fontFile`: string 字体文件, 可以是绝对路径或别名.
+     *     * `top`: int 水印文字的顶部距离原图顶部的偏移, y轴起点, 默认为`0`.
+     *     * `left`: int 水印文字的左侧距离原图左侧的偏移, x轴起点, 默认为`0`.
+     *     * `fontOptions`: array 字体属性, 支持以下三个值:
+     *       * `size`: int 字体的大小, 单位像素(`px`), 默认为`12`.
+     *       * `color`: string 字体的颜色, 十六进制颜色编码, 可以不带`#`, 默认为`fff`.
+     *       * `angle`: int 写入文本的角度, 默认为`0`.
+     *   - `resize`: false|array 调整图片大小的配置. 有以下可用值:
+     *     * `width`: int 图片调整后的宽度.
+     *     * `height`: int 图片调整后的高度.
+     *     * `keepAspectRatio`: bool 是否保持图片纵横比, 默认为`true`.
      *     * 如果设置为`true`, 图片将在不超过`width`和`height`的情况下, 等比例缩放;
-     *   * `allowUpscaling`: bool 如果原图很小, 图片是否放大, 默认为`false`.
-     *   * `match`: array 调整图片大小后保存路径的替换规则, 必须是两个元素的数组, 默认为: ['image', 'resize']. 注意, 当两个元素的值相同时, 将不会保存原图, 而仅保留调整大小的图片.
+     *     * `allowUpscaling`: bool 如果原图很小, 图片是否放大, 默认为`false`.
      */
     public $config = [];
     /**
@@ -93,39 +91,19 @@ class Uploader
      */
     public $fullName;
     /**
-     * @var string 完整的缩略图文件名(带路径)
+     * @var string 经过处理后的文件名(带路径)
      */
-    public $thumbName;
-    /**
-     * @var string 完整的裁剪图文件名(带路径)
-     */
-    public $cropName;
-    /**
-     * @var string 添加边框后的完整的文件名(带路径)
-     */
-    public $frameName;
-    /**
-     * @var string 添加水印图片后的完整的文件名(带路径)
-     */
-    public $watermarkName;
-    /**
-     * @var string 添加文字图片后的完整的文件名(带路径)
-     */
-    public $textName;
-    /**
-     * @var string 调整图片大小后的完整的文件名(带路径)
-     */
-    public $resizeName;
+    public $processName;
     /**
      * @var int 文件大小, 单位:B
      */
     public $fileSize;
     /**
-     * @var string 文件的 MIME 类型
+     * @var string 文件的 MIME 类型(eg "image/gif").
      */
     public $fileType;
     /**
-     * @var string 文件扩展名
+     * @var string 文件扩展名(eg "jpg").
      */
     public $fileExt;
     /**
@@ -151,8 +129,8 @@ class Uploader
      * @param string $fileField 文件上传域名称, eg: 'upfile'.
      * @param array $config 上传配置信息.
      * @param string $type 上传类型, 可用值: 'remote'(拉取远程图片), 'base64'(处理base64编码的图片上传), 'upload'(普通上传, 默认值).
-     * @throws \yii\base\ErrorException
-     * @throws \yii\base\Exception
+     * @throws ErrorException
+     * @throws Exception
      */
     public function __construct($fileField, $config = [], $type = 'upload')
     {
@@ -161,12 +139,7 @@ class Uploader
             'allowFiles' => ['.png', '.jpg', '.jpeg'],
             'pathFormat' => '/uploads/image/{time}',
             'realName' => 'scrawl.png',
-            'thumb' => false,  // 缩略图
-            'crop' => false,  // 裁剪图
-            'frame' => false,  // 添加边框
-            'watermark' => false,  // 添加图片水印
-            'text' => false,  // 添加文字水印
-            'resize' => false,  // 调整图片大小
+            'process' => false,
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->rootUrl = ArrayHelper::remove($config, 'rootUrl', Yii::$app->request->hostInfo);
@@ -189,8 +162,8 @@ class Uploader
     /**
      * 分离大文件分片上传与普通上传.
      * @return bool
-     * @throws \yii\base\ErrorException
-     * @throws \yii\base\Exception
+     * @throws ErrorException
+     * @throws Exception
      */
     private function uploadHandle()
     {
@@ -200,7 +173,7 @@ class Uploader
     /**
      * 普通文件上传.
      * @return bool
-     * @throws \yii\base\Exception
+     * @throws Exception
      */
     private function uploadFile()
     {
@@ -257,7 +230,7 @@ class Uploader
 
         // 保存上传文件
         if($this->file->saveAs($fullPath)){
-            if(!self::processImage($fullPath)){
+            if(!self::processImage($this->config['process'], $fullPath)){
                 return false;
             }
             return true;
@@ -270,8 +243,8 @@ class Uploader
     /**
      * 大文件分片上传
      * @return bool
-     * @throws \yii\base\ErrorException
-     * @throws \yii\base\Exception
+     * @throws ErrorException
+     * @throws Exception
      */
     private function uploadChunkFile()
     {
@@ -345,7 +318,7 @@ class Uploader
             file_put_contents($fullPath, $blob);  // 保存分片内容到文件
             FileHelper::removeDirectory($chunkPath);  // 删除对应分片暂存区
 
-            if(!self::processImage($fullPath)){
+            if(!self::processImage($this->config['process'], $fullPath)){
                 return false;
             }
 
@@ -362,7 +335,7 @@ class Uploader
      * 处理 base64 编码的图片上传(主要是 UEditor 编辑器的涂鸦功能).
      * @param string $fileField 文件上传域名称, eg: 'upfile'.
      * @return bool
-     * @throws \yii\base\Exception
+     * @throws Exception
      */
     private function uploadBase64($fileField)
     {
@@ -400,48 +373,70 @@ class Uploader
 
     /**
      * 对图片进一步处理
+     * @param array $process 图片处理配置.
      * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
      * @return bool
-     * @throws \yii\base\Exception
+     * @throws Exception
      */
-    private function processImage($tempName)
+    private function processImage($process, $tempName)
     {
-        if(in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
-            if($this->config['thumb']){  // 生成缩略图
-                if(!self::makeThumb($tempName)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_THUMB'];
-                    return false;
-                }
-            }
-            if($this->config['crop']){  // 生成裁剪图
-                if(!self::cropImage($tempName)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_CROP'];
-                    return false;
-                }
-            }
-            if($this->config['frame']){  // 添加边框
-                if(!self::frameImage($tempName)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_FRAME'];
-                    return false;
-                }
-            }
-            if($this->config['watermark']){  // 添加图片水印
-                if(!self::watermarkImage($tempName)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_WATERMARK'];
-                    return false;
-                }
-            }
-            if($this->config['text']){  // 添加文字水印
-                if(!self::textImage($tempName)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_TEXT'];
-                    return false;
-                }
-            }
-            if($this->config['resize']){  // 调整图片大小
-                if(!self::resizeImage($tempName)){
-                    $this->stateInfo = $this->stateInfo ? $this->stateInfo : self::$stateMap['ERROR_MAKE_RESIZE'];
-                    return false;
-                }
+        // 先过滤掉不需要进行图片处理的文件
+        if(empty($process) || !in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
+            return true;
+        }
+
+        // 处理后图片的路径
+        list($imageStr, $processStr) = ArrayHelper::remove($process, 'match', ['image', 'process']);
+        $this->processName = Helper::getThumbName($this->fullName, $imageStr, $processStr);
+        $processPath = FileHelper::normalizePath($this->rootPath . $this->processName);  // 文件在磁盘上的绝对路径
+
+        // 创建目录
+        if(!FileHelper::createDirectory(dirname($processPath))){
+            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            return false;
+        }
+
+        // 对图片进行处理, 每处理一次就保存一次
+        $first = true;
+        foreach($process as $key => $config){
+            switch($key){
+                case 'thumb':
+                    if(!self::makeThumb($first ? $tempName : $processPath, $processPath, $config)){
+                        return false;
+                    }
+                    $first = false;
+                    break;
+                case 'crop':
+                    if(!self::cropImage($first ? $tempName : $processPath, $processPath, $config)){
+                        return false;
+                    }
+                    $first = false;
+                    break;
+                case 'frame':
+                    if(!self::frameImage($first ? $tempName : $processPath, $processPath, $config)){
+                        return false;
+                    }
+                    $first = false;
+                    break;
+                case 'watermark':
+                    if(!self::watermarkImage($first ? $tempName : $processPath, $processPath, $config)){
+                        return false;
+                    }
+                    $first = false;
+                    break;
+                case 'text':
+                    if(!self::textImage($first ? $tempName : $processPath, $processPath, $config)){
+                        return false;
+                    }
+                    $first = false;
+                    break;
+                case 'resize':
+                    if(!self::resizeImage($first ? $tempName : $processPath, $processPath, $config)){
+                        return false;
+                    }
+                    $first = false;
+                    break;
+                default: break;
             }
         }
         return true;
@@ -449,172 +444,149 @@ class Uploader
 
     /**
      * 生成缩略图.
-     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $tempName 处理前图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $processPath 处理后图片的绝对路径.
+     * @param array $config 处理配置.
      * @return bool 缩略图生成失败时, Image 会抛出异常.
-     * @throws \yii\base\Exception
      */
-    private function makeThumb($tempName)
+    private function makeThumb($tempName, $processPath, $config)
     {
-        $width = ArrayHelper::getValue($this->config['thumb'], 'width');
-        $height = ArrayHelper::getValue($this->config['thumb'], 'height');
-        $mode = ArrayHelper::getValue($this->config['thumb'], 'mode', 'outbound');
-        list($imageStr, $thumbStr) = ArrayHelper::getValue($this->config['thumb'], 'match', ['image', 'thumb']);
+        $width = ArrayHelper::getValue($config, 'width');
+        $height = ArrayHelper::getValue($config, 'height');
+        $mode = ArrayHelper::getValue($config, 'mode', 'outbound');
 
+        // 判断宽度和高度, 不能同时为`null`
         if(!$width && !$height){
-            $this->stateInfo = self::$stateMap['ERROR_THUMB_WIDTH_HEIGHT'];
-            return false;
-        }
-
-        $this->thumbName = Helper::getThumbName($this->fullName, $imageStr, $thumbStr);
-        $thumbPath = FileHelper::normalizePath($this->rootPath . $this->thumbName);  // 文件在磁盘上的绝对路径
-
-        // 创建目录
-        if(!FileHelper::createDirectory(dirname($thumbPath))){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            $this->stateInfo = '生成缩略图时, 宽度和高度不能同时为`null`';
             return false;
         }
 
         // 生成并保存缩略图
-        Image::thumbnail($tempName, $width, $height, $mode)->save($thumbPath);
+        Image::thumbnail($tempName, $width, $height, $mode)->save($processPath);
         return true;
     }
 
     /**
      * 生成裁剪图
-     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $tempName 处理前图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $processPath 处理后图片的绝对路径.
+     * @param array $config 处理配置.
      * @return bool 裁剪图生成失败时, Image 会抛出异常.
-     * @throws \yii\base\Exception
      */
-    private function cropImage($tempName)
+    private function cropImage($tempName, $processPath, $config)
     {
-        $width = ArrayHelper::getValue($this->config['crop'], 'width');
-        $height = ArrayHelper::getValue($this->config['crop'], 'height');
-        $top = ArrayHelper::getValue($this->config['crop'], 'top', 0);
-        $left = ArrayHelper::getValue($this->config['crop'], 'left', 0);
-        list($imageStr, $cropStr) = ArrayHelper::getValue($this->config['crop'], 'match', ['image', 'crop']);
+        $width = ArrayHelper::getValue($config, 'width');
+        $height = ArrayHelper::getValue($config, 'height');
+        $top = ArrayHelper::getValue($config, 'top', 0);
+        $left = ArrayHelper::getValue($config, 'left', 0);
 
-        $this->cropName = Helper::getThumbName($this->fullName, $imageStr, $cropStr);
-        $cropPath = FileHelper::normalizePath($this->rootPath . $this->cropName);  // 文件在磁盘上的绝对路径
-
-        // 创建目录
-        if(!FileHelper::createDirectory(dirname($cropPath))){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+        // 判断宽度和高度, 都不能为`0`或负值
+        if($width <= 0 || $height <= 0){
+            $this->stateInfo = '生成裁剪图时, 宽度和高度都不能为`0`或负值';
             return false;
         }
 
         // 生成并保存裁剪图
-        Image::crop($tempName, $width, $height, [$left, $top])->save($cropPath);
+        Image::crop($tempName, $width, $height, [$left, $top])->save($processPath);
         return true;
     }
 
     /**
      * 给图片添加边框
-     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $tempName 处理前图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $processPath 处理后图片的绝对路径.
+     * @param array $config 处理配置.
      * @return bool
-     * @throws \yii\base\Exception
      */
-    private function frameImage($tempName)
+    private function frameImage($tempName, $processPath, $config)
     {
-        $margin = ArrayHelper::getValue($this->config['frame'], 'margin', 20);
-        $color = ArrayHelper::getValue($this->config['frame'], 'color', '666');
-        $alpha = ArrayHelper::getValue($this->config['frame'], 'alpha', 100);
-        list($imageStr, $frameStr) = ArrayHelper::getValue($this->config['frame'], 'match', ['image', 'frame']);
-
-        $this->frameName = Helper::getThumbName($this->fullName, $imageStr, $frameStr);
-        $framePath = FileHelper::normalizePath($this->rootPath . $this->frameName);  // 文件在磁盘上的绝对路径
-
-        // 创建目录
-        if(!FileHelper::createDirectory(dirname($framePath))){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
-            return false;
-        }
+        $margin = ArrayHelper::getValue($config, 'margin', 20);
+        $color = ArrayHelper::getValue($config, 'color', '666');
+        $alpha = ArrayHelper::getValue($config, 'alpha', 100);
 
         // 生成并保存添加边框后的图片
-        Image::frame($tempName, $margin, $color, $alpha)->save($framePath);
+        Image::frame($tempName, $margin, $color, $alpha)->save($processPath);
         return true;
     }
 
     /**
      * 给图片添加图片水印
-     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $tempName 处理前图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $processPath 处理后图片的绝对路径.
+     * @param array $config 处理配置.
      * @return bool
-     * @throws \yii\base\Exception
      */
-    private function watermarkImage($tempName)
+    private function watermarkImage($tempName, $processPath, $config)
     {
-        $watermarkImage = ArrayHelper::getValue($this->config['watermark'], 'watermarkImage');
-        $top = ArrayHelper::getValue($this->config['watermark'], 'top', 0);
-        $left = ArrayHelper::getValue($this->config['watermark'], 'left', 0);
-        list($imageStr, $watermarkStr) = ArrayHelper::getValue($this->config['watermark'], 'match', ['image', 'watermark']);
+        $watermarkImage = ArrayHelper::getValue($config, 'watermarkImage');
+        $top = ArrayHelper::getValue($config, 'top', 0);
+        $left = ArrayHelper::getValue($config, 'left', 0);
 
-        $this->watermarkName = Helper::getThumbName($this->fullName, $imageStr, $watermarkStr);
-        $watermarkPath = FileHelper::normalizePath($this->rootPath . $this->watermarkName);  // 文件在磁盘上的绝对路径
-
-        // 创建目录
-        if(!FileHelper::createDirectory(dirname($watermarkPath))){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+        // 判断水印图片是否存在
+        if($watermarkImage && is_file($watermarkImage)){
+            $this->stateInfo = '添加图片水印时, 未找到水印图片';
             return false;
         }
 
         // 生成并保存添加图片水印后的图片
-        Image::watermark($tempName, $watermarkImage, [$left, $top])->save($watermarkPath);
+        Image::watermark($tempName, $watermarkImage, [$left, $top])->save($processPath);
         return true;
     }
 
     /**
      * 给图片添加文字水印
-     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $tempName 处理前图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $processPath 处理后图片的绝对路径.
+     * @param array $config 处理配置.
      * @return bool
-     * @throws \yii\base\Exception
      */
-    private function textImage($tempName)
+    private function textImage($tempName, $processPath, $config)
     {
-        $text = ArrayHelper::getValue($this->config['text'], 'text');
-        $fontFile = ArrayHelper::getValue($this->config['text'], 'fontFile');
-        $top = ArrayHelper::getValue($this->config['text'], 'top', 0);
-        $left = ArrayHelper::getValue($this->config['text'], 'left', 0);
-        $fontOptions = ArrayHelper::getValue($this->config['text'], 'fontOptions', []);
-        list($imageStr, $textStr) = ArrayHelper::getValue($this->config['text'], 'match', ['image', 'text']);
+        $text = ArrayHelper::getValue($config, 'text');
+        $fontFile = ArrayHelper::getValue($config, 'fontFile');
+        $top = ArrayHelper::getValue($config, 'top', 0);
+        $left = ArrayHelper::getValue($config, 'left', 0);
+        $fontOptions = ArrayHelper::getValue($config, 'fontOptions', []);
 
-        $this->textName = Helper::getThumbName($this->fullName, $imageStr, $textStr);
-        $textPath = FileHelper::normalizePath($this->rootPath . $this->textName);  // 文件在磁盘上的绝对路径
+        // 判断水印文字是否为空
+        if(!$text){
+            $this->stateInfo = '添加文字水印时, 水印文字不能为空';
+            return false;
+        }
 
-        // 创建目录
-        if(!FileHelper::createDirectory(dirname($textPath))){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+        // 判断字体文件是否存在
+        if($fontFile && is_file($fontFile)){
+            $this->stateInfo = '添加文字水印时, 未找到字体文件';
             return false;
         }
 
         // 生成并保存添加文字水印后的图片
-        Image::text($tempName, $text, $fontFile, [$left, $top], $fontOptions)->save($textPath);
+        Image::text($tempName, $text, $fontFile, [$left, $top], $fontOptions)->save($processPath);
         return true;
     }
 
     /**
      * 调整图片大小
-     * @param string $tempName 图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $tempName 处理前图片的绝对路径, 或上传图片的临时文件的路径.
+     * @param string $processPath 处理后图片的绝对路径.
+     * @param array $config 处理配置.
      * @return bool
-     * @throws \yii\base\Exception
      */
-    private function resizeImage($tempName)
+    private function resizeImage($tempName, $processPath, $config)
     {
-        $width = ArrayHelper::getValue($this->config['resize'], 'width');
-        $height = ArrayHelper::getValue($this->config['resize'], '$height');
-        $keepAspectRatio = ArrayHelper::getValue($this->config['resize'], 'keepAspectRatio', true);
-        $allowUpscaling = ArrayHelper::getValue($this->config['resize'], 'allowUpscaling', false);
-        list($imageStr, $resizeStr) = ArrayHelper::getValue($this->config['resize'], 'match', ['image', 'resize']);
+        $width = ArrayHelper::getValue($config, 'width');
+        $height = ArrayHelper::getValue($config, 'height');
+        $keepAspectRatio = ArrayHelper::getValue($config, 'keepAspectRatio', true);
+        $allowUpscaling = ArrayHelper::getValue($config, 'allowUpscaling', false);
 
-        $this->resizeName = Helper::getThumbName($this->fullName, $imageStr, $resizeStr);
-        $resizePath = FileHelper::normalizePath($this->rootPath . $this->resizeName);  // 文件在磁盘上的绝对路径
-
-        // 创建目录
-        if(!FileHelper::createDirectory(dirname($resizePath))){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+        // 判断宽度和高度, 不能同时为`null`
+        if(!$width && !$height){
+            $this->stateInfo = '调整图片大小时, 宽度和高度不能同时为`null`';
             return false;
         }
 
         // 生成并保存调整图片大小后的图片
-        Image::resize($tempName, $width, $height, $keepAspectRatio, $allowUpscaling)->save($resizePath);
+        Image::resize($tempName, $width, $height, $keepAspectRatio, $allowUpscaling)->save($processPath);
         return true;
     }
 
@@ -642,18 +614,10 @@ class Uploader
         //'ERROR_FILE_NOT_FOUND' => '找不到上传文件',
         'ERROR_WRITE_CONTENT' => '写入文件内容错误',
         'ERROR_HTTP_UPLOAD' => '非法上传',
-        'ERROR_MAKE_THUMB' => '创建缩略图失败',
-        'ERROR_MAKE_CROP' => '创建裁剪图失败',
-        'ERROR_MAKE_FRAME' => '添加边框失败',
-        'ERROR_MAKE_WATERMARK' => '添加图片水印失败',
-        'ERROR_MAKE_TEXT' => '添加文字水印失败',
-        'ERROR_MAKE_RESIZE' => '调整图片大小失败',
         'ERROR_CHUNK_DEFECT' => '分片不完整',
         'ERROR_UNKNOWN' => '未知错误',
         //'ERROR_DEAD_LINK' => '链接不可用',
         //'ERROR_HTTP_LINK' => '链接不是http链接',
         //'ERROR_HTTP_CONTENTTYPE' => '链接contentType不正确',
-
-        'ERROR_THUMB_WIDTH_HEIGHT' => '宽度和高度至少有一个值才能生成缩略图',
     ];
 }
