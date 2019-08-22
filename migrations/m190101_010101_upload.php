@@ -6,8 +6,7 @@ use yii\db\Migration;
  *
  * 迁移指令:
  * ```
- * yii
- * migrate --migrationPath=@vendor/moxuandi/yii2-helpers/migrations
+ * yii migrate --migrationPath=@vendor/moxuandi/yii2-helpers/migrations
  * ```
  */
 class m190101_010101_upload extends Migration
