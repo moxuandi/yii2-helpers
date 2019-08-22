@@ -65,4 +65,40 @@ class Upload extends ActiveRecord
             'updated_at' => '更新时间',
         ];
     }
+
+    // 通用状态
+    const STATUS_ACTIVE = 10;  // 启用
+    const STATUS_DISABLE = 0;  // 禁用
+    const STATUS_YES = 1;
+    const STATUS_NO = 0;
+
+    /**
+     * 启用
+     * @return bool
+     */
+    public function enable()
+    {
+        return static::updateAttributes(['status' => self::STATUS_ACTIVE]) !== false;
+    }
+
+    /**
+     * 禁用
+     * @return bool
+     */
+    public function disable()
+    {
+        return static::updateAttributes(['status' => self::STATUS_DISABLE]) !== false;
+    }
+
+    /**
+     * 回收站/软删除
+     * @param bool $real 物理删除还是逻辑删除
+     * @return bool|false|int
+     * @throws \Throwable
+     * @throws yii\db\StaleObjectException
+     */
+    public function delete($real = false)
+    {
+        return $real ? parent::delete() : static::updateAttributes(['is_delete' => self::STATUS_YES]) !== false;
+    }
 }
