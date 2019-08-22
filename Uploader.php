@@ -1,6 +1,7 @@
 <?php
 namespace moxuandi\helpers;
 
+use moxuandi\helpers\models\Upload;
 use Yii;
 use yii\base\ErrorException;
 use yii\base\Exception;
@@ -135,11 +136,12 @@ class Uploader
     public function __construct($fileField, $config = [], $type = 'upload')
     {
         $_config = [
-            'maxSize' => 1*1024*1024,
-            'allowFiles' => ['.png', '.jpg', '.jpeg'],
-            'pathFormat' => '/uploads/image/{time}',
-            'realName' => 'scrawl.png',
-            'process' => false,
+            'maxSize' => 1*1024*1024,                   // 上传大小限制, 单位B, 默认1MB
+            'allowFiles' => ['.png', '.jpg', '.jpeg'],  // 上传图片格式显示
+            'pathFormat' => '/uploads/image/{time}',    // 上传保存路径
+            'realName' => 'scrawl.png',                 // base64 编码的图片的默认名称
+            'process' => false,                         // 二维数组, 将按照子数组的顺序对图片进行处理
+            'saveDatabase' => false,                    // 文件信息是否保存入库
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->rootUrl = ArrayHelper::remove($config, 'rootUrl', Yii::$app->request->hostInfo);
@@ -222,7 +224,7 @@ class Uploader
         $this->fileName = StringHelper::basename($this->fullName);
 
         // 创建目录
-        $fullPath = FileHelper::normalizePath($this->rootPath . $this->fullName);  // 文件在磁盘上的绝对路径
+        $fullPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->fullName);  // 文件在磁盘上的绝对路径
         if(!FileHelper::createDirectory(dirname($fullPath))){
             $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
             return false;
@@ -230,9 +232,16 @@ class Uploader
 
         // 保存上传文件
         if($this->file->saveAs($fullPath)){
+            // 对图片进一步处理
             if(!self::processImage($this->config['process'], $fullPath)){
                 return false;
             }
+
+            // 保存文件信息入库
+            if($this->config['saveDatabase'] && !self::saveDatabase($fullPath)){
+                return false;
+            }
+
             return true;
         }else{
             $this->stateInfo = self::$stateMap['ERROR_FILE_MOVE'];
@@ -291,7 +300,7 @@ class Uploader
         }
 
         // 保存分片
-        $chunkPath = FileHelper::normalizePath($this->rootPath . $this->chunkPath . DIRECTORY_SEPARATOR . md5($this->realName));
+        $chunkPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->chunkPath . DIRECTORY_SEPARATOR . md5($this->realName));
         if(!FileHelper::createDirectory($chunkPath)){
             $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
             return false;
@@ -304,7 +313,7 @@ class Uploader
             $this->fileName = StringHelper::basename($this->fullName);
 
             // 创建目录
-            $fullPath = FileHelper::normalizePath($this->rootPath . $this->fullName);  // 文件在磁盘上的绝对路径
+            $fullPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->fullName);  // 文件在磁盘上的绝对路径
             if(!FileHelper::createDirectory(dirname($fullPath))){
                 $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
                 return false;
@@ -318,7 +327,13 @@ class Uploader
             file_put_contents($fullPath, $blob);  // 保存分片内容到文件
             FileHelper::removeDirectory($chunkPath);  // 删除对应分片暂存区
 
+            // 对图片进一步处理
             if(!self::processImage($this->config['process'], $fullPath)){
+                return false;
+            }
+
+            // 保存文件信息入库
+            if($this->config['saveDatabase'] && !self::saveDatabase($fullPath)){
                 return false;
             }
 
@@ -356,7 +371,7 @@ class Uploader
         }
 
         // 创建目录
-        $fullPath = FileHelper::normalizePath($this->rootPath . $this->fullName);  // 文件在磁盘上的绝对路径
+        $fullPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->fullName);  // 文件在磁盘上的绝对路径
         if(!FileHelper::createDirectory(dirname($fullPath))){
             $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
             return false;
@@ -364,6 +379,10 @@ class Uploader
 
         // 将图片数据写入文件, 并检查文件是否存在.
         if(file_put_contents($fullPath, $baseImg) && file_exists($fullPath)){
+            // 保存文件信息入库
+            if($this->config['saveDatabase'] && !self::saveDatabase($fullPath)){
+                return false;
+            }
             return true;
         }else{
             $this->stateInfo = self::$stateMap['ERROR_WRITE_CONTENT'];
@@ -388,7 +407,7 @@ class Uploader
         // 处理后图片的路径
         list($imageStr, $processStr) = ArrayHelper::remove($process, 'match', ['image', 'process']);
         $this->processName = Helper::getThumbName($this->fullName, $imageStr, $processStr);
-        $processPath = FileHelper::normalizePath($this->rootPath . $this->processName);  // 文件在磁盘上的绝对路径
+        $processPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->processName);  // 文件在磁盘上的绝对路径
 
         // 创建目录
         if(!FileHelper::createDirectory(dirname($processPath))){
@@ -590,6 +609,34 @@ class Uploader
         return true;
     }
 
+    /**
+     * 保存文件信息入库
+     * @param string|null $fullPath 文件在磁盘上的绝对路径
+     * @return bool
+     */
+    private function saveDatabase($fullPath = null)
+    {
+        $model = new Upload([
+            'real_name' => $this->realName,
+            'file_name' => $this->fileName,
+            'full_name' => $this->fullName,
+            'process_name' => $this->processName,
+            'file_size' => $this->fileSize,
+            'file_type' => $this->fileType,
+            'file_ext' => $this->fileExt,
+        ]);
+        if($fullPath){
+            $model->file_md5 = md5_file($fullPath);
+            $model->file_sha1 = sha1_file($fullPath);
+        }
+        if($model->save()){
+            return true;
+        }else{
+            $this->stateInfo = self::$stateMap['ERROR_DATABASE'];
+            return false;
+        }
+    }
+
 
     /**
      * @var array 上传状态映射表, 国际化用户需考虑此处数据的国际化.
@@ -619,5 +666,6 @@ class Uploader
         //'ERROR_DEAD_LINK' => '链接不可用',
         //'ERROR_HTTP_LINK' => '链接不是http链接',
         //'ERROR_HTTP_CONTENTTYPE' => '链接contentType不正确',
+        'ERROR_DATABASE' => '文件上传成功，但在保存到数据库时失败！',
     ];
 }
