@@ -123,6 +123,10 @@ class Uploader
      * @var string|null 上传状态信息
      */
     public $stateInfo;
+    /**
+     * @var null|upload
+     */
+    public $uploadModel;
 
 
     /**
@@ -630,6 +634,7 @@ class Uploader
             $model->file_sha1 = sha1_file($fullPath);
         }
         if($model->save()){
+            $this->uploadModel = $model;
             return true;
         }else{
             $this->stateInfo = self::$stateMap['ERROR_DATABASE'];
