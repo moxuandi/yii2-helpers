@@ -65,8 +65,9 @@ class Helper
                 return [
                     'width' => $imgInfo[0],
                     'height' => $imgInfo[1],
-                    'type' => ArrayHelper::getValue(static::$typeList, $imgInfo[2], 'Unknown'),
+                    'type' => image_type_to_extension($imgInfo[2], false),
                     'mime' => $imgInfo['mime'],
+                    'attr' => $imgInfo[3],
                 ];
             }else{
                 return $imgInfo[3];
@@ -135,39 +136,4 @@ class Helper
 
         return $format . '.' . ($fileType ? $fileType : self::getExtension($fileName));
     }
-
-    /**
-     * 通过字符串替换, 获取缩略图路径.
-     * @param string $url 图片路径, eg: 'uploads/image/201707/1512001416.jpg'.
-     * @param string $imageStr eg: 'image'.
-     * @param string $thumbStr eg: 'thumb'.
-     * @return mixed eg: 'uploads/thumb/201707/1512001416.jpg'.
-     */
-    public static function getThumbName($url, $imageStr = 'image', $thumbStr = 'thumb')
-    {
-        return str_replace($imageStr, $thumbStr, $url);
-    }
-
-
-    /**
-     * @var array 图片类型
-     */
-    static $typeList = [
-        1 => 'GIF',
-        2 => 'JPG',
-        3 => 'PNG',
-        4 => 'SWF',
-        5 => 'PSD',
-        6 => 'BMP',
-        7 => 'TIFF(intel byte order)',
-        8 => 'TIFF(motorola byte order)',
-        9 => 'JPC',
-        10 => 'JP2',
-        11 => 'JPX',
-        12 => 'JB2',
-        13 => 'SWC',
-        14 => 'IFF',
-        15 => 'WBMP',
-        16 => 'XBM',
-    ];
 }

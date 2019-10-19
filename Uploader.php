@@ -410,7 +410,7 @@ class Uploader
 
         // 处理后图片的路径
         list($imageStr, $processStr) = ArrayHelper::remove($process, 'match', ['image', 'process']);
-        $this->processName = Helper::getThumbName($this->fullName, $imageStr, $processStr);
+        $this->processName = str_replace($imageStr, $processStr, $this->fullName);
         $processPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->processName);  // 文件在磁盘上的绝对路径
 
         // 创建目录
@@ -604,8 +604,9 @@ class Uploader
 
         // 判断宽度和高度, 不能同时为`null`
         if(!$width && !$height){
-            $this->stateInfo = '调整图片大小时, 宽度和高度不能同时为`null`';
-            return false;
+            $imgInfo = Helper::getImageInfo($tempName, true);
+            $width = $imgInfo['width'];
+            $height = $imgInfo['height'];
         }
 
         // 生成并保存调整图片大小后的图片

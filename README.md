@@ -45,7 +45,7 @@ echo Helper::microTimeFloat();
 // 格式化文件大小, eg: '1.46 MB'.
 echo Helper::byteFormat(1532684);
 
-// 获取图片的宽高等属性, eg: ['width' => 1366, 'height' => 768, 'type' => 'PNG', 'mime' => 'image/png'].:
+// 获取图片的宽高等属性, eg: ['width' => 1366, 'height' => 768, 'type' => 'png', 'mime' => 'image/png', 'attr' => 'width="203" height="50"']:
 echo Helper::getImageInfo('uploads/img.png');
 
 // 获取文件的扩展名, eg: 'jpg':
