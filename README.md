@@ -111,6 +111,8 @@ echo Json::encode([
 ]);
 ```
 
+> 提示: 如果`saveDatabase=true`, 请执行数据库迁移命令:`yii migrate --migrationPath=@vendor/moxuandi/yii2-helpers/migrations`
+
 > 提示: 缩略图配置中, `width`和`height`其中一个可以设置为`null`, 此时将按原图比例自动缩放图片. 但不能同时为`null`!
 
 > 提示: 配置中的`match`参数, 当两个元素的值相同时, 将不会保存原图, 而仅保留缩略图.
