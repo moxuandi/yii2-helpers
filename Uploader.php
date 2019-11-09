@@ -289,7 +289,7 @@ class Uploader
         $this->realName = $post['name'];
         $this->fileSize = $post['size'];
         $this->fileType = $post['type'];
-        $this->fileExt = $this->file->extension;
+        $this->fileExt = Helper::getExtension($this->realName);  // 不使用`$this->file->extension`, 因为`$this->file->name`可能是`blob`
 
         // 检查文件大小是否超出网站限制
         if($this->fileSize > $this->config['maxSize']){
