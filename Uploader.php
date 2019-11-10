@@ -124,9 +124,9 @@ class Uploader
      */
     public $chunkProgress = [];
     /**
-     * @var string|null 上传状态信息
+     * @var int|string 上传状态
      */
-    public $stateInfo;
+    public $status;
     /**
      * @var null|upload
      */
@@ -163,7 +163,7 @@ class Uploader
             default: $result = self::uploadHandle(); break;
         }
         if($result){
-            $this->stateInfo = self::$stateMap[0];
+            $this->status = 0;
             return true;
         }
         return false;
@@ -189,31 +189,31 @@ class Uploader
     {
         // 检查上传对象是否为空
         if(empty($this->file)){
-            $this->stateInfo = self::$stateMap[4];
+            $this->status = 4;
             return false;
         }
 
         // 校验 $_FILES['upfile']['error'] 的错误
         if($this->file->error){
-            $this->stateInfo = self::$stateMap[$this->file->error];
+            $this->status = $this->file->error;
             return false;
         }
 
         // 检查临时文件是否存在
         if(!file_exists($this->file->tempName)){
-            $this->stateInfo = self::$stateMap['ERROR_TMP_FILE_NOT_FOUND'];
+            $this->status = 'ERROR_TMP_FILE_NOT_FOUND';
             return false;
         }
 
         // 检查文件是否是通过 HTTP POST 上传的
         if(!is_uploaded_file($this->file->tempName)){
-            $this->stateInfo = self::$stateMap['ERROR_HTTP_UPLOAD'];
+            $this->status = 'ERROR_HTTP_UPLOAD';
             return false;
         }
 
         // 检查文件大小是否超出网站限制
         if($this->file->size > $this->config['maxSize']){
-            $this->stateInfo = self::$stateMap['ERROR_SIZE_EXCEED'];
+            $this->status = 'ERROR_SIZE_EXCEED';
             return false;
         }
 
@@ -224,7 +224,7 @@ class Uploader
 
         // 检查文件类型(扩展名)是否符合网站要求
         if($this->config['allowFiles'] && !in_array('.' . $this->fileExt, $this->config['allowFiles'])){
-            $this->stateInfo = self::$stateMap['ERROR_TYPE_NOT_ALLOWED'];
+            $this->status = 'ERROR_TYPE_NOT_ALLOWED';
             return false;
         }
 
@@ -234,7 +234,7 @@ class Uploader
         // 创建目录
         $fullPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->fullName);  // 文件在磁盘上的绝对路径
         if(!FileHelper::createDirectory(dirname($fullPath))){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            $this->status = 'ERROR_CREATE_DIR';
             return false;
         }
 
@@ -252,7 +252,7 @@ class Uploader
 
             return true;
         }else{
-            $this->stateInfo = self::$stateMap['ERROR_FILE_MOVE'];
+            $this->status = 'ERROR_FILE_MOVE';
             return false;
         }
     }
@@ -267,25 +267,25 @@ class Uploader
     {
         // 检查上传对象是否为空
         if(empty($this->file)){
-            $this->stateInfo = self::$stateMap[4];
+            $this->status = 4;
             return false;
         }
 
         // 校验 $_FILES['upfile']['error'] 的错误
         if($this->file->error){
-            $this->stateInfo = self::$stateMap[$this->file->error];
+            $this->status = $this->file->error;
             return false;
         }
 
         // 检查临时文件是否存在
         if(!file_exists($this->file->tempName)){
-            $this->stateInfo = self::$stateMap['ERROR_TMP_FILE_NOT_FOUND'];
+            $this->status = 'ERROR_TMP_FILE_NOT_FOUND';
             return false;
         }
 
         // 检查文件是否是通过 HTTP POST 上传的
         if(!is_uploaded_file($this->file->tempName)){
-            $this->stateInfo = self::$stateMap['ERROR_HTTP_UPLOAD'];
+            $this->status = 'ERROR_HTTP_UPLOAD';
             return false;
         }
 
@@ -302,20 +302,20 @@ class Uploader
 
         // 检查文件大小是否超出网站限制
         if($this->fileSize > $this->config['maxSize']){
-            $this->stateInfo = self::$stateMap['ERROR_SIZE_EXCEED'];
+            $this->status = 'ERROR_SIZE_EXCEED';
             return false;
         }
 
         // 检查文件类型(扩展名)是否符合网站要求
         if($this->config['allowFiles'] && !in_array('.' . $this->fileExt, $this->config['allowFiles'])){
-            $this->stateInfo = self::$stateMap['ERROR_TYPE_NOT_ALLOWED'];
+            $this->status = 'ERROR_TYPE_NOT_ALLOWED';
             return false;
         }
 
         // 保存分片
         $chunkPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->chunkPath . DIRECTORY_SEPARATOR . md5($this->realName));
         if(!FileHelper::createDirectory($chunkPath)){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            $this->status = 'ERROR_CREATE_DIR';
             return false;
         }
         $this->file->saveAs($chunkPath . DIRECTORY_SEPARATOR . 'chunk_' . $this->chunkProgress['chunk']);
@@ -328,7 +328,7 @@ class Uploader
             // 创建目录
             $fullPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->fullName);  // 文件在磁盘上的绝对路径
             if(!FileHelper::createDirectory(dirname($fullPath))){
-                $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+                $this->status = 'ERROR_CREATE_DIR';
                 return false;
             }
 
@@ -354,7 +354,7 @@ class Uploader
             //$this->file->type = $this->fileType;  // 重置上传对象的MIME类型, 可选
             return true;
         }else{
-            $this->stateInfo = self::$stateMap['ERROR_CHUNK_DEFECT'];
+            $this->status = 'ERROR_CHUNK_DEFECT';
             return false;
         }
     }
@@ -379,14 +379,14 @@ class Uploader
 
         // 检查文件大小是否超出网站限制
         if($this->fileSize > $this->config['maxSize']){
-            $this->stateInfo = self::$stateMap['ERROR_SIZE_EXCEED'];
+            $this->status = 'ERROR_SIZE_EXCEED';
             return false;
         }
 
         // 创建目录
         $fullPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->fullName);  // 文件在磁盘上的绝对路径
         if(!FileHelper::createDirectory(dirname($fullPath))){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            $this->status = 'ERROR_CREATE_DIR';
             return false;
         }
 
@@ -398,7 +398,7 @@ class Uploader
             }
             return true;
         }else{
-            $this->stateInfo = self::$stateMap['ERROR_WRITE_CONTENT'];
+            $this->status = 'ERROR_WRITE_CONTENT';
             return false;
         }
     }
@@ -424,7 +424,7 @@ class Uploader
 
         // 创建目录
         if(!FileHelper::createDirectory(dirname($processPath))){
-            $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
+            $this->status = 'ERROR_CREATE_DIR';
             return false;
         }
 
@@ -489,7 +489,7 @@ class Uploader
 
         // 判断宽度和高度, 不能同时为`null`
         if(!$width && !$height){
-            $this->stateInfo = '生成缩略图时, 宽度和高度不能同时为`null`';
+            $this->status = 'ERROR_CREATE_THUMB';
             return false;
         }
 
@@ -514,7 +514,7 @@ class Uploader
 
         // 判断宽度和高度, 都不能为`0`或负值
         if($width <= 0 || $height <= 0){
-            $this->stateInfo = '生成裁剪图时, 宽度和高度都不能为`0`或负值';
+            $this->status = 'ERROR_CROP_IMAGE';
             return false;
         }
 
@@ -556,7 +556,7 @@ class Uploader
 
         // 判断水印图片是否存在
         if($watermarkImage && is_file($watermarkImage)){
-            $this->stateInfo = '添加图片水印时, 未找到水印图片';
+            $this->status = 'ERROR_FILE_NOT_FOUND';
             return false;
         }
 
@@ -582,13 +582,13 @@ class Uploader
 
         // 判断水印文字是否为空
         if(!$text){
-            $this->stateInfo = '添加文字水印时, 水印文字不能为空';
+            $this->status = 'ERROR_NO_TEXT';
             return false;
         }
 
         // 判断字体文件是否存在
         if($fontFile && is_file($fontFile)){
-            $this->stateInfo = '添加文字水印时, 未找到字体文件';
+            $this->status = 'ERROR_NO_FONT_FILE';
             return false;
         }
 
@@ -647,7 +647,7 @@ class Uploader
             $this->uploadModel = $model;
             return true;
         }else{
-            $this->stateInfo = self::$stateMap['ERROR_DATABASE'];
+            $this->status = 'ERROR_DATABASE';
             return false;
         }
     }
@@ -681,6 +681,11 @@ class Uploader
         //'ERROR_DEAD_LINK' => '链接不可用',
         //'ERROR_HTTP_LINK' => '链接不是http链接',
         //'ERROR_HTTP_CONTENTTYPE' => '链接contentType不正确',
-        'ERROR_DATABASE' => '文件上传成功，但在保存到数据库时失败！',
+        'ERROR_DATABASE' => '文件上传成功，但在保存到数据库时失败',
+        'ERROR_CREATE_THUMB' => '生成缩略图时, 宽度和高度不能同时为`null`',
+        'ERROR_CROP_IMAGE' => '生成裁剪图时, 宽度和高度都不能为`0`或负值',
+        'ERROR_FILE_NOT_FOUND' => '添加图片水印时, 未找到水印图片',
+        'ERROR_NO_FONT_FILE' => '添加文字水印时, 未找到字体文件',
+        'ERROR_NO_TEXT' => '添加文字水印时, 水印文字不能为空',
     ];
 }
