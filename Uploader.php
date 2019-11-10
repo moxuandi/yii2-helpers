@@ -3,7 +3,6 @@ namespace moxuandi\helpers;
 
 use moxuandi\helpers\models\Upload;
 use Yii;
-use yii\base\ErrorException;
 use yii\base\Exception;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
@@ -138,7 +137,6 @@ class Uploader
      * @param string $fileField 文件上传域名称, eg: 'upfile'.
      * @param array $config 上传配置信息.
      * @param string $type 上传类型, 可用值: 'remote'(拉取远程图片), 'base64'(处理base64编码的图片上传), 'upload'(普通上传, 默认值).
-     * @throws ErrorException
      * @throws Exception
      */
     public function __construct($fileField, $config = [], $type = 'upload')
@@ -172,7 +170,6 @@ class Uploader
     /**
      * 分离大文件分片上传与普通上传.
      * @return bool
-     * @throws ErrorException
      * @throws Exception
      */
     private function uploadHandle()
@@ -260,7 +257,6 @@ class Uploader
     /**
      * 大文件分片上传
      * @return bool
-     * @throws ErrorException
      * @throws Exception
      */
     private function uploadChunkFile()
@@ -313,15 +309,16 @@ class Uploader
         }
 
         // 保存分片
-        $chunkPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->chunkPath . DIRECTORY_SEPARATOR . md5($this->realName));
-        if(!FileHelper::createDirectory($chunkPath)){
+        $chunkName = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->chunkPath . DIRECTORY_SEPARATOR . md5($this->realName) . '.' . $this->fileExt);
+        if(!FileHelper::createDirectory(dirname($chunkName))){
             $this->status = 'ERROR_CREATE_DIR';
             return false;
         }
-        $this->file->saveAs($chunkPath . DIRECTORY_SEPARATOR . 'chunk_' . $this->chunkProgress['chunk']);
+        file_put_contents($chunkName, file_get_contents($this->file->tempName), FILE_APPEND);  // 追加写入文件
+        //FileHelper::unlink($this->file->tempName);  // 删除缓存文件
 
         // 分片全部上传完成, 并且分片暂存区保存有所有分片
-        if($this->chunkProgress['chunk'] == $this->chunkProgress['chunks'] && count(FileHelper::findFiles($chunkPath, ['recursive' => false])) == $this->chunkProgress['chunks']){
+        if($this->chunkProgress['chunk'] == $this->chunkProgress['chunks']){
             $this->fullName = Helper::getFullName($this->realName, $this->config['pathFormat'], $this->fileExt);
             $this->fileName = StringHelper::basename($this->fullName);
 
@@ -332,13 +329,8 @@ class Uploader
                 return false;
             }
 
-            // 合并分片
-            $blob = '';
-            for($i = 1; $i <= $this->chunkProgress['chunks']; $i++){
-                $blob .= file_get_contents($chunkPath . DIRECTORY_SEPARATOR . 'chunk_' . $i);  // 依次读取所有分片内容
-            }
-            file_put_contents($fullPath, $blob);  // 保存分片内容到文件
-            FileHelper::removeDirectory($chunkPath);  // 删除对应分片暂存区
+            // 移动文件, 从分片暂存区移动到真实位置
+            rename($chunkName, $fullPath);
 
             // 对图片进一步处理
             if(!self::processImage($this->config['process'], $fullPath)){
