@@ -314,7 +314,11 @@ class Uploader
             $this->status = 'ERROR_CREATE_DIR';
             return false;
         }
-        file_put_contents($chunkName, file_get_contents($this->file->tempName), FILE_APPEND);  // 追加写入文件
+        if($this->chunkProgress['chunk'] == 1){
+            file_put_contents($chunkName, file_get_contents($this->file->tempName));  // 新建并保存
+        }else{
+            file_put_contents($chunkName, file_get_contents($this->file->tempName), FILE_APPEND);  // 追加写入文件
+        }
         //FileHelper::unlink($this->file->tempName);  // 删除缓存文件
 
         // 分片全部上传完成, 并且分片暂存区保存有所有分片
@@ -329,8 +333,7 @@ class Uploader
                 return false;
             }
 
-            // 移动文件, 从分片暂存区移动到真实位置
-            rename($chunkName, $fullPath);
+            rename($chunkName, $fullPath);  // 移动文件, 从分片暂存区移动到真实位置
 
             // 对图片进一步处理
             if(!self::processImage($this->config['process'], $fullPath)){
