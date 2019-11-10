@@ -120,6 +120,10 @@ class Uploader
      */
     public $chunkPath = '/uploads/chunks';
     /**
+     * @var array 分片上传进度
+     */
+    public $chunkProgress = [];
+    /**
      * @var string|null 上传状态信息
      */
     public $stateInfo;
@@ -289,7 +293,12 @@ class Uploader
         $this->realName = $post['name'];
         $this->fileSize = $post['size'];
         $this->fileType = $post['type'];
-        $this->fileExt = Helper::getExtension($this->realName);  // 不使用`$this->file->extension`, 因为`$this->file->name`可能是`blob`
+        $this->fileExt = Helper::getExtension($this->realName);  // 不使用`$this->file->extension`, 因为`$this->file->name`的值可能是`blob`
+        $this->chunkProgress = [
+            'chunk' => $post['chunk'],
+            'chunks' => $post['chunks'],
+            'percent' => round($post['chunk'] / $post['chunks'] * 100) . '%',
+        ];
 
         // 检查文件大小是否超出网站限制
         if($this->fileSize > $this->config['maxSize']){
@@ -309,10 +318,10 @@ class Uploader
             $this->stateInfo = self::$stateMap['ERROR_CREATE_DIR'];
             return false;
         }
-        $this->file->saveAs($chunkPath . DIRECTORY_SEPARATOR . 'chunk_' . $post['chunk']);
+        $this->file->saveAs($chunkPath . DIRECTORY_SEPARATOR . 'chunk_' . $this->chunkProgress['chunk']);
 
         // 分片全部上传完成, 并且分片暂存区保存有所有分片
-        if($post['chunk'] + 1 == $post['chunks'] && count(FileHelper::findFiles($chunkPath, ['recursive' => false])) == $post['chunks']){
+        if($this->chunkProgress['chunk'] + 1 == $this->chunkProgress['chunks'] && count(FileHelper::findFiles($chunkPath, ['recursive' => false])) == $this->chunkProgress['chunks']){
             $this->fullName = Helper::getFullName($this->realName, $this->config['pathFormat'], $this->fileExt);
             $this->fileName = StringHelper::basename($this->fullName);
 
@@ -325,7 +334,7 @@ class Uploader
 
             // 合并分片
             $blob = '';
-            for($i = 0; $i < $post['chunks']; $i++){
+            for($i = 0; $i < $this->chunkProgress['chunks']; $i++){
                 $blob .= file_get_contents($chunkPath . DIRECTORY_SEPARATOR . 'chunk_' . $i);  // 依次读取所有分片内容
             }
             file_put_contents($fullPath, $blob);  // 保存分片内容到文件
