@@ -321,7 +321,7 @@ class Uploader
         $this->file->saveAs($chunkPath . DIRECTORY_SEPARATOR . 'chunk_' . $this->chunkProgress['chunk']);
 
         // 分片全部上传完成, 并且分片暂存区保存有所有分片
-        if($this->chunkProgress['chunk'] + 1 == $this->chunkProgress['chunks'] && count(FileHelper::findFiles($chunkPath, ['recursive' => false])) == $this->chunkProgress['chunks']){
+        if($this->chunkProgress['chunk'] == $this->chunkProgress['chunks'] && count(FileHelper::findFiles($chunkPath, ['recursive' => false])) == $this->chunkProgress['chunks']){
             $this->fullName = Helper::getFullName($this->realName, $this->config['pathFormat'], $this->fileExt);
             $this->fileName = StringHelper::basename($this->fullName);
 
@@ -334,7 +334,7 @@ class Uploader
 
             // 合并分片
             $blob = '';
-            for($i = 0; $i < $this->chunkProgress['chunks']; $i++){
+            for($i = 1; $i <= $this->chunkProgress['chunks']; $i++){
                 $blob .= file_get_contents($chunkPath . DIRECTORY_SEPARATOR . 'chunk_' . $i);  // 依次读取所有分片内容
             }
             file_put_contents($fullPath, $blob);  // 保存分片内容到文件
