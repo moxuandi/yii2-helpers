@@ -107,7 +107,7 @@ $config = [
 $up = new Uploader('upfile', $config);
 echo Json::encode([
     'url' => $up->fullName,
-    'state' => $up->stateInfo
+    'state' => Uploader::$stateMap[$up->status]
 ]);
 ```
 

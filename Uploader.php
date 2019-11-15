@@ -172,7 +172,7 @@ class Uploader
      * @return bool
      * @throws Exception
      */
-    private function uploadHandle()
+    public function uploadHandle()
     {
         return Yii::$app->request->post('chunks') ? $this->uploadChunkFile() : $this->uploadFile();
     }
@@ -182,7 +182,7 @@ class Uploader
      * @return bool
      * @throws Exception
      */
-    private function uploadFile()
+    public function uploadFile()
     {
         // 检查上传对象是否为空
         if(empty($this->file)){
@@ -259,7 +259,7 @@ class Uploader
      * @return bool
      * @throws Exception
      */
-    private function uploadChunkFile()
+    public function uploadChunkFile()
     {
         // 检查上传对象是否为空
         if(empty($this->file)){
@@ -360,7 +360,7 @@ class Uploader
      * @return bool
      * @throws Exception
      */
-    private function uploadBase64($fileField)
+    public function uploadBase64($fileField)
     {
         $base64Data = Yii::$app->request->post($fileField);
         $baseImg = base64_decode($base64Data);  // 解码图片数据
@@ -405,7 +405,7 @@ class Uploader
      * @return bool
      * @throws Exception
      */
-    private function processImage($process, $tempName)
+    public function processImage($process, $tempName)
     {
         // 先过滤掉不需要进行图片处理的文件
         if(empty($process) || !in_array($this->fileExt, ['jpg', 'jpeg', 'png', 'gif'])){
@@ -476,7 +476,7 @@ class Uploader
      * @param array $config 处理配置.
      * @return bool 缩略图生成失败时, Image 会抛出异常.
      */
-    private function makeThumb($tempName, $processPath, $config)
+    public function makeThumb($tempName, $processPath, $config)
     {
         $width = ArrayHelper::getValue($config, 'width');
         $height = ArrayHelper::getValue($config, 'height');
@@ -500,7 +500,7 @@ class Uploader
      * @param array $config 处理配置.
      * @return bool 裁剪图生成失败时, Image 会抛出异常.
      */
-    private function cropImage($tempName, $processPath, $config)
+    public function cropImage($tempName, $processPath, $config)
     {
         $width = ArrayHelper::getValue($config, 'width');
         $height = ArrayHelper::getValue($config, 'height');
@@ -525,7 +525,7 @@ class Uploader
      * @param array $config 处理配置.
      * @return bool
      */
-    private function frameImage($tempName, $processPath, $config)
+    public function frameImage($tempName, $processPath, $config)
     {
         $margin = ArrayHelper::getValue($config, 'margin', 20);
         $color = ArrayHelper::getValue($config, 'color', '666');
@@ -543,7 +543,7 @@ class Uploader
      * @param array $config 处理配置.
      * @return bool
      */
-    private function watermarkImage($tempName, $processPath, $config)
+    public function watermarkImage($tempName, $processPath, $config)
     {
         $watermarkImage = ArrayHelper::getValue($config, 'watermarkImage');
         $top = ArrayHelper::getValue($config, 'top', 0);
@@ -567,7 +567,7 @@ class Uploader
      * @param array $config 处理配置.
      * @return bool
      */
-    private function textImage($tempName, $processPath, $config)
+    public function textImage($tempName, $processPath, $config)
     {
         $text = ArrayHelper::getValue($config, 'text');
         $fontFile = ArrayHelper::getValue($config, 'fontFile');
@@ -599,7 +599,7 @@ class Uploader
      * @param array $config 处理配置.
      * @return bool
      */
-    private function resizeImage($tempName, $processPath, $config)
+    public function resizeImage($tempName, $processPath, $config)
     {
         $width = ArrayHelper::getValue($config, 'width');
         $height = ArrayHelper::getValue($config, 'height');
@@ -623,7 +623,7 @@ class Uploader
      * @param string|null $fullPath 文件在磁盘上的绝对路径
      * @return bool
      */
-    private function saveDatabase($fullPath = null)
+    public function saveDatabase($fullPath = null)
     {
         $model = new Upload([
             'real_name' => $this->realName,

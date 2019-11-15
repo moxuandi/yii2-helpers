@@ -1,8 +1,6 @@
 <?php
 namespace moxuandi\helpers;
 
-use yii\helpers\ArrayHelper;
-
 /**
  * Class Helper 通用助手类
  *

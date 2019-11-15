@@ -8,6 +8,8 @@ use yii\db\Migration;
  * ```
  * yii migrate --migrationPath=@vendor/moxuandi/yii2-helpers/migrations
  * ```
+ *
+ * @property string|null $tableOptions
  */
 class m190101_010101_upload extends Migration
 {
