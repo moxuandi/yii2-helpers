@@ -155,10 +155,10 @@ class Uploader
         $this->file = UploadedFile::getInstanceByName($fileField);  // 获取上传对象
 
         switch($type){
-            case 'remote': $result = self::uploadFile(); break;
-            case 'base64': $result = self::uploadBase64($fileField); break;
+            case 'remote': $result = $this->uploadFile(); break;
+            case 'base64': $result = $this->uploadBase64($fileField); break;
             case 'upload':
-            default: $result = self::uploadHandle(); break;
+            default: $result = $this->uploadHandle(); break;
         }
         if($result){
             $this->status = 0;
@@ -174,7 +174,7 @@ class Uploader
      */
     private function uploadHandle()
     {
-        return Yii::$app->request->post('chunks') ? self::uploadChunkFile() : self::uploadFile();
+        return Yii::$app->request->post('chunks') ? $this->uploadChunkFile() : $this->uploadFile();
     }
 
     /**
@@ -238,12 +238,12 @@ class Uploader
         // 保存上传文件
         if($this->file->saveAs($fullPath)){
             // 对图片进一步处理
-            if(!self::processImage($this->config['process'], $fullPath)){
+            if(!$this->processImage($this->config['process'], $fullPath)){
                 return false;
             }
 
             // 保存文件信息入库
-            if($this->config['saveDatabase'] && !self::saveDatabase($fullPath)){
+            if($this->config['saveDatabase'] && !$this->saveDatabase($fullPath)){
                 return false;
             }
 
@@ -336,12 +336,12 @@ class Uploader
             rename($chunkName, $fullPath);  // 移动文件, 从分片暂存区移动到真实位置
 
             // 对图片进一步处理
-            if(!self::processImage($this->config['process'], $fullPath)){
+            if(!$this->processImage($this->config['process'], $fullPath)){
                 return false;
             }
 
             // 保存文件信息入库
-            if($this->config['saveDatabase'] && !self::saveDatabase($fullPath)){
+            if($this->config['saveDatabase'] && !$this->saveDatabase($fullPath)){
                 return false;
             }
 
@@ -388,7 +388,7 @@ class Uploader
         // 将图片数据写入文件, 并检查文件是否存在.
         if(file_put_contents($fullPath, $baseImg) && file_exists($fullPath)){
             // 保存文件信息入库
-            if($this->config['saveDatabase'] && !self::saveDatabase($fullPath)){
+            if($this->config['saveDatabase'] && !$this->saveDatabase($fullPath)){
                 return false;
             }
             return true;
@@ -428,37 +428,37 @@ class Uploader
         foreach($process as $key => $config){
             switch($key){
                 case 'thumb':
-                    if(!self::makeThumb($first ? $tempName : $processPath, $processPath, $config)){
+                    if(!$this->makeThumb($first ? $tempName : $processPath, $processPath, $config)){
                         return false;
                     }
                     $first = false;
                     break;
                 case 'crop':
-                    if(!self::cropImage($first ? $tempName : $processPath, $processPath, $config)){
+                    if(!$this->cropImage($first ? $tempName : $processPath, $processPath, $config)){
                         return false;
                     }
                     $first = false;
                     break;
                 case 'frame':
-                    if(!self::frameImage($first ? $tempName : $processPath, $processPath, $config)){
+                    if(!$this->frameImage($first ? $tempName : $processPath, $processPath, $config)){
                         return false;
                     }
                     $first = false;
                     break;
                 case 'watermark':
-                    if(!self::watermarkImage($first ? $tempName : $processPath, $processPath, $config)){
+                    if(!$this->watermarkImage($first ? $tempName : $processPath, $processPath, $config)){
                         return false;
                     }
                     $first = false;
                     break;
                 case 'text':
-                    if(!self::textImage($first ? $tempName : $processPath, $processPath, $config)){
+                    if(!$this->textImage($first ? $tempName : $processPath, $processPath, $config)){
                         return false;
                     }
                     $first = false;
                     break;
                 case 'resize':
-                    if(!self::resizeImage($first ? $tempName : $processPath, $processPath, $config)){
+                    if(!$this->resizeImage($first ? $tempName : $processPath, $processPath, $config)){
                         return false;
                     }
                     $first = false;
