@@ -61,7 +61,7 @@ $config = [
     'maxSize' => 1*1024*1024,  // 上传大小限制, 单位B, 默认1MB
     'allowFiles' => ['.png', '.jpg', '.jpeg', '.gif', '.bmp'],  // 上传图片格式显示
     'pathFormat' => 'uploads/image/{yyyy}{mm}/{yy}{mm}{dd}_{hh}{ii}{ss}_{rand:4}',  // 上传保存路径, 可以自定义保存路径和文件名格式
-    'saveDatabase' => false,  // 文件信息是否保存入库
+    'modelClass' => 'common\model\Upload',  // 文件信息是否保存入库
     'process' => [  // 二维数组, 将按照子数组的顺序对图片进行处理
         'match' => ['image', 'process'],  // 图片处理后保存路径的替换规则, 必须是两个元素的数组
         'thumb' => [  // 缩略图配置
@@ -111,13 +111,13 @@ echo Json::encode([
 ]);
 ```
 
-> 提示: 如果`saveDatabase=true`, 请执行数据库迁移命令:`yii migrate --migrationPath=@vendor/moxuandi/yii2-helpers/migrations`
-
 > 提示: 如果`process.resize`的宽高都未设置, 将使用图片的原始宽高; 此时, 可能会压缩图片大小, 但也有可能造成图片大小增大!!!
 
 > 提示: 缩略图配置中, `width`和`height`其中一个可以设置为`null`, 此时将按原图比例自动缩放图片. 但不能同时为`null`!
 
 > 提示: 配置中的`match`参数, 当两个元素的值相同时, 将不会保存原图, 而仅保留缩略图.
+
+> 如果要使用文件保存入库功能, 必须将`modelClass`设置为类的完全限定名称(eg: `common\model\Upload`), 该类必须是`yii\db\ActiveRecord`的子类, 且必须包含一些字段(参考`@vendor\moxuandi\yii2-helpers\migrations\m190101_010101_upload.php`)
 
 
 ### OAuth2第三方登录用法示例

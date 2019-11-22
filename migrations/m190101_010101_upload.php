@@ -19,6 +19,8 @@ class m190101_010101_upload extends Migration
     {
         $this->createTable(self::TABLE_NAME, [
             'id' => $this->primaryKey(),
+
+            // 主要字段
             'real_name' => $this->string()->notNull()->defaultValue('')->comment('原始文件名'),
             'file_name' => $this->string()->notNull()->defaultValue('')->comment('新文件名'),
             'full_name' => $this->string()->notNull()->defaultValue('')->comment('完整的文件名(带路径)'),

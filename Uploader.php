@@ -1,7 +1,6 @@
 <?php
 namespace moxuandi\helpers;
 
-use moxuandi\helpers\models\Upload;
 use Yii;
 use yii\base\Exception;
 use yii\helpers\ArrayHelper;
@@ -127,7 +126,7 @@ class Uploader
      */
     public $status;
     /**
-     * @var null|upload
+     * @var null|yii\db\ActiveRecord
      */
     public $uploadModel;
 
@@ -147,7 +146,7 @@ class Uploader
             'pathFormat' => '/uploads/image/{time}',    // 上传保存路径
             'realName' => 'scrawl.png',                 // base64 编码的图片的默认名称
             'process' => false,                         // 二维数组, 将按照子数组的顺序对图片进行处理
-            'saveDatabase' => false,                    // 文件信息是否保存入库
+            'modelClass' => null,                       // 文件信息是否保存入库
         ];
         $this->rootPath = ArrayHelper::remove($config, 'rootPath', dirname(Yii::$app->request->scriptFile));
         $this->rootUrl = ArrayHelper::remove($config, 'rootUrl', Yii::$app->request->hostInfo);
@@ -243,7 +242,7 @@ class Uploader
             }
 
             // 保存文件信息入库
-            if($this->config['saveDatabase'] && !$this->saveDatabase($fullPath)){
+            if($this->config['modelClass'] && !$this->saveDatabase($fullPath)){
                 return false;
             }
 
@@ -341,7 +340,7 @@ class Uploader
             }
 
             // 保存文件信息入库
-            if($this->config['saveDatabase'] && !$this->saveDatabase($fullPath)){
+            if($this->config['modelClass'] && !$this->saveDatabase($fullPath)){
                 return false;
             }
 
@@ -388,7 +387,7 @@ class Uploader
         // 将图片数据写入文件, 并检查文件是否存在.
         if(file_put_contents($fullPath, $baseImg) && file_exists($fullPath)){
             // 保存文件信息入库
-            if($this->config['saveDatabase'] && !$this->saveDatabase($fullPath)){
+            if($this->config['modelClass'] && !$this->saveDatabase($fullPath)){
                 return false;
             }
             return true;
@@ -625,7 +624,15 @@ class Uploader
      */
     public function saveDatabase($fullPath = null)
     {
-        $model = new Upload([
+        /* @var $model yii\db\ActiveRecord */
+        $model = new $this->config['modelClass'];
+        if(!is_subclass_of($model, 'yii\db\ActiveRecord')){
+            $this->status = 'ERROR_MODEL_CLASS';
+            return false;
+        }
+
+        // 构建模型数据
+        $data = [
             'real_name' => $this->realName,
             'file_name' => $this->fileName,
             'full_name' => $this->fullName,
@@ -633,16 +640,18 @@ class Uploader
             'file_size' => $this->fileSize,
             'file_type' => $this->fileType,
             'file_ext' => $this->fileExt,
-        ]);
+        ];
         if($fullPath){
-            $model->file_md5 = md5_file($fullPath);
-            $model->file_sha1 = sha1_file($fullPath);
+            $data['file_md5'] = md5_file($fullPath);
+            $data['file_sha1'] = sha1_file($fullPath);
         }
+
+        $model->load($data, '');
         if($model->save()){
             $this->uploadModel = $model;
             return true;
         }else{
-            $this->status = 'ERROR_DATABASE';
+            $this->status = 'ERROR_SAVE_DATABASE';
             return false;
         }
     }
@@ -676,7 +685,8 @@ class Uploader
         //'ERROR_DEAD_LINK' => '链接不可用',
         //'ERROR_HTTP_LINK' => '链接不是http链接',
         //'ERROR_HTTP_CONTENTTYPE' => '链接contentType不正确',
-        'ERROR_DATABASE' => '文件上传成功，但在保存到数据库时失败',
+        'ERROR_SAVE_DATABASE' => '文件上传成功，但在保存到数据库时失败',
+        'ERROR_MODEL_CLASS' => '`modelClass`必须继承自`yii\db\ActiveRecord`或其子类',
         'ERROR_CREATE_THUMB' => '生成缩略图时, 宽度和高度不能同时为`null`',
         'ERROR_CROP_IMAGE' => '生成裁剪图时, 宽度和高度都不能为`0`或负值',
         'ERROR_FILE_NOT_FOUND' => '添加图片水印时, 未找到水印图片',
