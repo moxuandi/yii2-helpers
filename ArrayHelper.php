@@ -18,14 +18,18 @@ class ArrayHelper extends \yii\helpers\ArrayHelper
      * @param string $id ID字段名
      * @param string $pidName 父级ID字段名
      * @param string $itemKey 子数组的键名
+     * @param bool $ignoreEmpty 是否忽略空子集
      * @return array
      */
-    public static function itemsMerge(array $items, $pid = 0, $id = 'id', $pidName = 'pid', $itemKey = '-')
+    public static function itemsMerge(array $items, $pid = 0, $id = 'id', $pidName = 'pid', $itemKey = '-', $ignoreEmpty = false)
     {
         $array = [];
         foreach($items as $item){
             if($item[$pidName] == $pid){
-                $item[$itemKey] = self::itemsMerge($items, $item[$id], $id, $pidName, $itemKey);
+                $children = self::itemsMerge($items, $item[$id], $id, $pidName, $itemKey, $ignoreEmpty);
+                if($children || !$ignoreEmpty){
+                    $item[$itemKey] = $children;
+                }
                 $array[] = $item;
             }
         }
