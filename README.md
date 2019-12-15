@@ -119,6 +119,7 @@ echo Json::encode([
 
 > 如果要使用文件保存入库功能, 必须将`modelClass`设置为类的完全限定名称(eg: `common\model\Upload`), 该类必须是`yii\db\ActiveRecord`的子类, 且必须包含一些字段(参考`@vendor\moxuandi\yii2-helpers\migrations\m190101_010101_upload.php`)
 
+> 迁移命令: `yii migrate --migrationPath=@vendor/moxuandi/yii2-helpers/migrations`
 
 ### OAuth2第三方登录用法示例
 
