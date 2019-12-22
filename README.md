@@ -58,7 +58,6 @@ echo Helper::getFullName('img.jpg', 'uploads/image/{yyyy}{mm}/{time}');
 ### Uploader上传类用法示例:
 ```php
 $config = [
-    'maxSize' => 1*1024*1024,  // 上传大小限制, 单位B, 默认1MB
     'allowFiles' => ['.png', '.jpg', '.jpeg', '.gif', '.bmp'],  // 上传图片格式显示
     'pathFormat' => 'uploads/image/{yyyy}{mm}/{yy}{mm}{dd}_{hh}{ii}{ss}_{rand:4}',  // 上传保存路径, 可以自定义保存路径和文件名格式
     'modelClass' => 'common\model\Upload',  // 文件信息是否保存入库

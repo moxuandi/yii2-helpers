@@ -33,7 +33,6 @@ class Uploader
     /**
      * @var array 上传配置信息
      * 可用的数组的键如下:
-     * - `maxSize`: int 上传大小限制,  默认为: 1*1024*1024 (1M).
      * - `allowFiles`: array 允许上传的文件类型, 默认为: ['.png', '.jpg', '.jpeg']. 设置为空数组或`false`时, 将不验证文件类型!
      * - `pathFormat`: string 文件保存路径, 默认为: '/uploads/image/{time}'.
      * - `realName`: string 图片的原始名称, 处理 base64 编码的图片时有效.
@@ -141,7 +140,6 @@ class Uploader
     public function __construct($fileField, $config = [], $type = 'upload')
     {
         $_config = [
-            'maxSize' => 1*1024*1024,                   // 上传大小限制, 单位B, 默认1MB
             'allowFiles' => ['.png', '.jpg', '.jpeg'],  // 上传图片格式显示
             'pathFormat' => '/uploads/image/{time}',    // 上传保存路径
             'realName' => 'scrawl.png',                 // base64 编码的图片的默认名称
@@ -204,12 +202,6 @@ class Uploader
         // 检查文件是否是通过 HTTP POST 上传的
         if(!is_uploaded_file($this->file->tempName)){
             $this->status = 'ERROR_HTTP_UPLOAD';
-            return false;
-        }
-
-        // 检查文件大小是否超出网站限制
-        if($this->file->size > $this->config['maxSize']){
-            $this->status = 'ERROR_SIZE_EXCEED';
             return false;
         }
 
@@ -295,12 +287,6 @@ class Uploader
             'percent' => round($post['chunk'] / $post['chunks'] * 100) . '%',
         ];
 
-        // 检查文件大小是否超出网站限制
-        if($this->fileSize > $this->config['maxSize']){
-            $this->status = 'ERROR_SIZE_EXCEED';
-            return false;
-        }
-
         // 检查文件类型(扩展名)是否符合网站要求
         if($this->config['allowFiles'] && !in_array('.' . $this->fileExt, $this->config['allowFiles'])){
             $this->status = 'ERROR_TYPE_NOT_ALLOWED';
@@ -370,12 +356,6 @@ class Uploader
         $this->fileExt = Helper::getExtension($this->realName);
         $this->fullName = Helper::getFullName($this->realName, $this->config['pathFormat'], $this->fileExt);
         $this->fileName = StringHelper::basename($this->fullName);
-
-        // 检查文件大小是否超出网站限制
-        if($this->fileSize > $this->config['maxSize']){
-            $this->status = 'ERROR_SIZE_EXCEED';
-            return false;
-        }
 
         // 创建目录
         $fullPath = FileHelper::normalizePath($this->rootPath . DIRECTORY_SEPARATOR . $this->fullName);  // 文件在磁盘上的绝对路径
@@ -672,7 +652,6 @@ class Uploader
         8 => '因 php 扩展停止文件上传',  // UPLOAD_ERR_EXTENSION
         //'ERROR_TMP_FILE' => '临时文件错误',
         'ERROR_TMP_FILE_NOT_FOUND' => '找不到临时文件',
-        'ERROR_SIZE_EXCEED' => '文件大小超出网站限制',
         'ERROR_TYPE_NOT_ALLOWED' => '文件类型不允许',
         'ERROR_CREATE_DIR' => '目录创建失败',
         'ERROR_DIR_NOT_WRITEABLE' => '目录没有写入权限',
