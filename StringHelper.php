@@ -72,6 +72,9 @@ class StringHelper extends \yii\helpers\StringHelper
      */
     public static function parseAttr($string)
     {
+        if(empty($string)){
+            return [];
+        }
         $array = preg_split('/[,;\r\n]+/', trim($string, ",;\r\n"));  // 使用正则表达式分割字符串成数组
         if(strpos($string,':')){  // 如果源字符串中有`:`
             $result = [];
