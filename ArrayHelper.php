@@ -18,19 +18,20 @@ class ArrayHelper extends \yii\helpers\ArrayHelper
      * @param string $id ID字段名
      * @param string $pidName 父级ID字段名
      * @param string $itemKey 子数组的键名
+     * @param array|null $saveKeys 要保留的数组键, 任何空值都将保留完整的数组
      * @param bool $ignoreEmpty 是否忽略空子集
      * @return array
      */
-    public static function itemsMerge(array $items, $pid = 0, $id = 'id', $pidName = 'pid', $itemKey = '-', $ignoreEmpty = false)
+    public static function itemsMerge(array $items, $pid = 0, $id = 'id', $pidName = 'pid', $itemKey = '-', $saveKeys = null, $ignoreEmpty = false)
     {
         $array = [];
         foreach($items as $item){
             if($item[$pidName] == $pid){
-                $children = self::itemsMerge($items, $item[$id], $id, $pidName, $itemKey, $ignoreEmpty);
+                $children = self::itemsMerge($items, $item[$id], $id, $pidName, $itemKey, $saveKeys, $ignoreEmpty);
                 if($children || !$ignoreEmpty){
                     $item[$itemKey] = $children;
                 }
-                $array[] = $item;
+                $array[] = $saveKeys ? array_intersect_key($item, array_flip($saveKeys)) : $item;
             }
         }
         return $array;
