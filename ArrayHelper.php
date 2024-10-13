@@ -21,6 +21,7 @@ class ArrayHelper extends \yii\helpers\ArrayHelper
      * @param array|null $saveKeys 要保留的数组键, 任何空值都将保留完整的数组
      * @param bool $ignoreEmpty 是否忽略空子集
      * @return array
+     * @test Add passport test
      */
     public static function itemsMerge(array $items, $pid = 0, $id = 'id', $pidName = 'pid', $itemKey = '-', $saveKeys = null, $ignoreEmpty = false)
     {
