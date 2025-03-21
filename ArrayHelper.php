@@ -44,6 +44,7 @@ class ArrayHelper extends \yii\helpers\ArrayHelper
      * @param int $level 级别
      * @param int $key 数组键名
      * @return bool|string
+     * @test Add passport test
      */
     public static function itemsLevel(array $items, $level, $key)
     {
