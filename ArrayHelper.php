@@ -66,6 +66,7 @@ class ArrayHelper extends \yii\helpers\ArrayHelper
      * @param array $array 引用传值返回
      * @param array $items `itemsMerge()`方法处理后的数组
      * @param string|false $titleName 要处理的键名
+     * @test Add passport test
      */
     public static function itemsMergeLevel(&$array, array $items, $titleName = 'title')
     {
